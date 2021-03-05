@@ -1,3 +1,4 @@
+import argparse
 import os
 
 import torch
@@ -71,9 +72,6 @@ class LitMNIST(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
-    ####################
-    # DATA RELATED HOOKS
-    ####################
 
     def prepare_data(self):
         # download
@@ -92,18 +90,30 @@ class LitMNIST(pl.LightningModule):
             self.mnist_test = MNIST(self.data_dir, train=False, transform=self.transform)
 
     def train_dataloader(self):
-        return DataLoader(self.mnist_train, batch_size=32)
+        return DataLoader(self.mnist_train, batch_size=32, num_workers=4)
 
     def val_dataloader(self):
-        return DataLoader(self.mnist_val, batch_size=32)
+        return DataLoader(self.mnist_val, batch_size=32, num_workers=4)
 
     def test_dataloader(self):
-        return DataLoader(self.mnist_test, batch_size=32)
+        return DataLoader(self.mnist_test, batch_size=32, num_workers=4)
 
 
-model = LitMNIST()
-trainer = pl.Trainer(gpus=1, max_epochs=3, progress_bar_refresh_rate=20)
-trainer.fit(model)
 
-trainer.test()
+
+def main(hparams):
+    model = LitMNIST()
+    trainer = pl.Trainer(gpus=hparams.gpus, max_epochs=hparams.epochs, progress_bar_refresh_rate=20, distributed_backend='ddp')
+    trainer.fit(model)
+    trainer.test()
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Experiment Hyperparams')
+    parser.add_argument('--gpus', default=4, type=int, help='number of GPUs to train on' )
+    parser.add_argument('--epochs', default=90, type=int, metavar='N',
+                    help='number of total epochs to run')
+    args = parser.parse_args()
+
+    main(args)
 
