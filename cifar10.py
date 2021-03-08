@@ -2,6 +2,7 @@ import argparse
 import os
 
 import torch
+import torchvision
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, random_split
@@ -143,7 +144,7 @@ def test():
 
 # test()
 
-    
+
 class LiMCIFAR10(pl.LightningModule):
     
     def __init__(self, data_dir='./', learning_rate=1e-2):
