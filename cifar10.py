@@ -249,7 +249,8 @@ def main(hparams):
         weight_decay=hparams.weight_decay, 
         momentum=hparams.momentum, 
         batch_size=hparams.batch_size, )
-    logger = TestTubeLogger("tb_logs", name="cifar_10")
+    logger = TestTubeLogger("tb_logs", name=hparams.experiment)
+    logger.experiment.tag(vars(hparams)) 
     trainer = pl.Trainer(gpus=hparams.gpus, 
             logger=logger,
             max_epochs=hparams.epochs, 
@@ -263,6 +264,7 @@ def main(hparams):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Experiment Hyperparams')
+    parser.add_argument('--experiment', default='cifar_10', type=str, help='the name of experiment' )
     parser.add_argument('--gpus', default=4, type=int, help='number of GPUs to train on' )
     parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
