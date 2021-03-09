@@ -147,7 +147,7 @@ def test():
 
 class LiMCIFAR10(pl.LightningModule):
     
-    def __init__(self, data_dir='./', learning_rate=1e-2):
+    def __init__(self, data_dir='./', learning_rate=0.1):
 
         super().__init__()
 
@@ -240,7 +240,7 @@ class LiMCIFAR10(pl.LightningModule):
 
 def main(hparams):
     model = LiMCIFAR10()
-    trainer = pl.Trainer(gpus=hparams.gpus, max_epochs=hparams.epochs, progress_bar_refresh_rate=20, distributed_backend='ddp')
+    trainer = pl.Trainer(gpus=hparams.gpus, max_epochs=hparams.epochs, progress_bar_refresh_rate=20, distributed_backend='ddp', weights_summary='full')
     trainer.fit(model)
     trainer.test()
 
