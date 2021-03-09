@@ -254,7 +254,6 @@ def main(hparams):
             logger=logger,
             max_epochs=hparams.epochs, 
             deterministic=hparams.deterministic, 
-            add_log_row_interval=10,
             progress_bar_refresh_rate=20, 
             distributed_backend='ddp', 
             weights_summary='full')
