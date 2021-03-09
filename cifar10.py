@@ -11,6 +11,7 @@ from torchvision import transforms
 import pytorch_lightning as pl
 from pytorch_lightning.metrics.functional import accuracy
 from pytorch_lightning.loggers import TestTubeLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 
  
 '''ResNet in PyTorch.
@@ -254,8 +255,18 @@ def main(hparams):
         batch_size=hparams.batch_size, )
     logger = TestTubeLogger("tb_logs", name=hparams.expr_name, description=hparams.expr_desc,)
     logger.experiment.tag(vars(hparams)) 
+    checkpoint_callback = ModelCheckpoint(
+        monitor='val_acc',
+        filename='sample-mnist-{epoch:02d}-{val_acc:.2f}',
+        period=2,
+    )
+
+
+
     trainer = pl.Trainer(gpus=hparams.gpus, 
             logger=logger,
+            callbacks=[checkpoint_callback],
+            resume_from_checkpoint=hparams.resume,
             max_epochs=hparams.epochs, 
             deterministic=hparams.deterministic, 
             progress_bar_refresh_rate=20, 
@@ -288,6 +299,9 @@ if __name__ == '__main__':
     parser.add_argument('--wd', '--weight-decay', default=5e-4, type=float,
                         metavar='W', help='weight decay (default: 1e-4)',
                         dest='weight_decay')
+    parser.add_argument('--resume', default=None, type=str, metavar='PATH',
+                    help='path to latest checkpoint (default: none)')
+
     args = parser.parse_args()
 
     main(args)
