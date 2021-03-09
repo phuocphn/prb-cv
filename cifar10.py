@@ -190,7 +190,7 @@ class LiMCIFAR10(pl.LightningModule):
         loss = self.criterion(outputs, y) 
 
         # Tensorboard logs 
-        self.log('train_loss', loss, prog_bar=True)
+        self.log('train_loss', loss, prog_bar=False)
         return loss
 
     def validation_step(self, batch, batch_idx):
