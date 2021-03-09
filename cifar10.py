@@ -264,13 +264,15 @@ def main(hparams):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Experiment Hyperparams')
-    parser.add_argument('--experiment', default='cifar_10', type=str, help='the name of experiment' )
+    parser.add_argument('--expr_name', default='cifar_10', type=str, help='the name of experiment' )
+    parser.add_argument('--expr_desc', default='The detail description of the experiment', 
+                        type=str, help='The detail description of the experiment' )
+
     parser.add_argument('--gpus', default=4, type=int, help='number of GPUs to train on' )
     parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
     parser.add_argument('--deterministic', dest='deterministic', action='store_true',
                     help='enable deterministic training')
-
     parser.add_argument('-b', '--batch-size', default=256, type=int,
                         metavar='N',
                         help='mini-batch size (default: 256), this is the total '
