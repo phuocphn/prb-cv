@@ -245,7 +245,7 @@ class LiMCIFAR10(pl.LightningModule):
 
 def main(hparams):
     model = LiMCIFAR10(learning_rate=hparams.lr, 
-        weight_decay=hparams.wd, 
+        weight_decay=hparams.weight_decay, 
         momentum=hparams.momentum, 
         batch_size=hparams.batch_size, )
     logger = TestTubeLogger("tb_logs", name="cifar_10")
