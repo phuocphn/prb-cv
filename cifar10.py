@@ -184,6 +184,9 @@ class LiMCIFAR10(pl.LightningModule):
     def forward(self, x):
         return self.model(x)
 
+    def on_epoch_start(self):
+        self.logger.experiment.add_scalar('lr', self.optimizer.param_groups[0]['lr'])
+
     def training_step(self, batch, batch_idx):
         x, y = batch
         outputs = self.forward(x)
