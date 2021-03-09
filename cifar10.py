@@ -148,6 +148,7 @@ class LiMCIFAR10(pl.LightningModule):
     
     def __init__(self, data_dir='~/data', 
                     learning_rate=0.1, 
+                    momentum=0.9,
                     weight_decay=5e-4, 
                     num_workers=4, batch_size=128):
 
