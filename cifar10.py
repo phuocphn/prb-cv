@@ -249,7 +249,7 @@ def main(hparams):
         weight_decay=hparams.weight_decay, 
         momentum=hparams.momentum, 
         batch_size=hparams.batch_size, )
-    logger = TestTubeLogger("tb_logs", name=hparams.experiment)
+    logger = TestTubeLogger("tb_logs", name=hparams.expr_name, description=hparams.expr_desc,)
     logger.experiment.tag(vars(hparams)) 
     trainer = pl.Trainer(gpus=hparams.gpus, 
             logger=logger,
