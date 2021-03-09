@@ -200,13 +200,15 @@ class LiMCIFAR10(pl.LightningModule):
         return self.validation_step(batch, batch_idx)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        return optimizer
+        optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=5e-4)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+        # return optimizer
+        return [optimizer], [scheduler]
 
 
     def prepare_data(self):
         torchvision.datasets.CIFAR10(root=self.data_dir, train=True, download=True, transform=self.transform_train)
-        torchvision.datasets.CIFAR10(root=self.data_dir, train=False, download=True, transform=self.transform_train)
+        torchvision.datasets.CIFAR10(root=self.data_dir, train=False, download=True, transform=self.transform_test)
 
 
     def setup(self, stage=None):
