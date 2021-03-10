@@ -151,7 +151,7 @@ class LiMCIFAR10(pl.LightningModule):
                     learning_rate=0.1, 
                     momentum=0.9,
                     weight_decay=5e-4, 
-                    num_workers=4, batch_size=128):
+                    num_workers=2, batch_size=128):
 
         super().__init__()
 
@@ -256,21 +256,25 @@ def main(hparams):
     logger = TestTubeLogger("tb_logs", name=hparams.expr_name, description=hparams.expr_desc,)
     logger.experiment.tag(vars(hparams)) 
     checkpoint_callback = ModelCheckpoint(
-        monitor='val_acc',
-        filename='sample-mnist-{epoch:02d}-{val_acc:.2f}',
-        period=2,
+        filename='{epoch:02d}-{val_loss:.2f}-{val_acc:.2f}',
+        save_top_k=1,
+        verbose=True,
+        monitor='val_loss',
+        mode='min',
+        prefix=''
     )
 
 
 
     trainer = pl.Trainer(gpus=hparams.gpus, 
             logger=logger,
-            callbacks=[checkpoint_callback],
+            # callbacks=[checkpoint_callback],
+            checkpoint_callback=checkpoint_callback,
             resume_from_checkpoint=hparams.resume,
             max_epochs=hparams.epochs, 
             deterministic=hparams.deterministic, 
             progress_bar_refresh_rate=20, 
-            distributed_backend='ddp', 
+            distributed_backend='dp', 
             weights_summary='full')
     trainer.fit(model)
     trainer.test()
