@@ -3,6 +3,8 @@ import os
 import importlib
 import torch
 import torchvision
+from torch import nn
+from torch.nn import functional as F
 from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import MNIST
 from torchvision import transforms
