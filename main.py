@@ -117,7 +117,8 @@ class LiMCIFAR10(pl.LightningModule):
 
 
 def main(hparams):
-    model = LiMCIFAR10(learning_rate=hparams.lr, 
+    model = LiMCIFAR10(arch=hparams.arch,
+        learning_rate=hparams.lr, 
         weight_decay=hparams.weight_decay, 
         momentum=hparams.momentum, 
         batch_size=hparams.batch_size, )
