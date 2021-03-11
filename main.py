@@ -49,9 +49,7 @@ class LiMCIFAR10(pl.LightningModule):
         ])
 
         module = importlib.import_module("models.cifar10")
-        self.model = getattr(module, arch)
-        assert self.model != None
-
+        self.model = getattr(module, arch)()
         self.criterion = nn.CrossEntropyLoss()
 
     def forward(self, x):
