@@ -1,0 +1,82 @@
+(python37-env) phuocphn@europa:~/prb-cv$ tree tb_logs/
+tb_logs/
+├── cifar_10.densenet121
+│   └── version_0
+│       ├── checkpoints
+│       │   └── epoch=186-val_loss=0.15-val_acc=0.96.ckpt
+│       ├── media
+│       ├── meta.experiment
+│       ├── meta_tags.csv
+│       ├── metrics.csv
+│       └── tf
+│           └── events.out.tfevents.1615450464.europa.25434.0
+├── cifar_10.efficientnetb0
+│   └── version_0
+│       ├── checkpoints
+│       │   └── epoch=177-val_loss=0.26-val_acc=0.93.ckpt
+│       ├── media
+│       ├── meta.experiment
+│       ├── meta_tags.csv
+│       ├── metrics.csv
+│       └── tf
+│           └── events.out.tfevents.1615441968.europa.2145.0
+├── cifar_10.googlenet
+│   └── version_0
+│       ├── checkpoints
+│       │   └── epoch=157-val_loss=0.14-val_acc=0.96.ckpt
+│       ├── media
+│       ├── meta.experiment
+│       ├── meta_tags.csv
+│       ├── metrics.csv
+│       └── tf
+│           └── events.out.tfevents.1615433889.callisto.8708.0
+├── cifar_10.mobilenetv2
+│   └── version_0
+│       ├── checkpoints
+│       │   └── epoch=190-val_loss=0.20-val_acc=0.95.ckpt
+│       ├── media
+│       ├── meta.experiment
+│       ├── meta_tags.csv
+│       ├── metrics.csv
+│       └── tf
+│           └── events.out.tfevents.1615441836.europa.28691.0
+├── cifar_10.presnet18
+│   └── version_0
+│       ├── checkpoints
+│       │   └── epoch=186-val_loss=0.24-val_acc=0.94.ckpt
+│       ├── media
+│       ├── meta.experiment
+│       ├── meta_tags.csv
+│       ├── metrics.csv
+│       └── tf
+│           └── events.out.tfevents.1615432620.europa.4841.0
+├── cifar_10.resnet18
+│   └── version_0
+│       ├── checkpoints
+│       │   └── epoch=179-val_loss=0.14-val_acc=0.96.ckpt
+│       ├── media
+│       ├── meta.experiment
+│       ├── meta_tags.csv
+│       ├── metrics.csv
+│       └── tf
+│           └── events.out.tfevents.1615432608.europa.4742.0
+├── cifar_10.shufflenetv2
+│   └── version_0
+│       ├── checkpoints
+│       │   └── epoch=183-val_loss=0.27-val_acc=0.91.ckpt
+│       ├── media
+│       ├── meta.experiment
+│       ├── meta_tags.csv
+│       ├── metrics.csv
+│       └── tf
+│           └── events.out.tfevents.1615441933.europa.32123.0
+└── cifar_10.vgg
+    └── version_0
+        ├── checkpoints
+        │   └── epoch=178-val_loss=0.27-val_acc=0.94.ckpt
+        ├── media
+        ├── meta.experiment
+        ├── meta_tags.csv
+        ├── metrics.csv
+        └── tf
+            └── events.out.tfevents.1615432632.europa.5595.0
