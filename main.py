@@ -241,7 +241,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--arch', default='ResNet18', type=str, help='network architecture.' )
     parser.add_argument('--gpus', default=4, type=int, help='number of GPUs to train on' )
-    parser.add_argument('--epochs', default=90, type=int, metavar='N',
+    parser.add_argument('--epochs', default=200, type=int, metavar='N',
                     help='number of total epochs to run')
     parser.add_argument('--deterministic', dest='deterministic', action='store_true',
                     help='enable deterministic training')
