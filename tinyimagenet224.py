@@ -12,7 +12,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.metrics.functional import accuracy
 
 
-class LiMTinyImageNet(pl.LightningModule):
+class LiMTinyImageNet224(pl.LightningModule):
     
     def __init__(self, data_dir='~/data',
                     arch='resnet18', 

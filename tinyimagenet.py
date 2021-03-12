@@ -15,7 +15,7 @@ from pytorch_lightning.metrics.functional import accuracy
 class LiMTinyImageNet(pl.LightningModule):
     
     def __init__(self, data_dir='~/data',
-                    arch='ResNet18', 
+                    arch='resnet18', 
                     learning_rate=0.001, 
                     momentum=0.9,
                     weight_decay=5e-4, 
