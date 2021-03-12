@@ -1,0 +1,90 @@
+(python37-env) phuocphn@europa:~/prb-cv$ tree tb_logs/
+tb_logs/
+├── cifar_100.mobilenetv2
+│   └── version_0
+│       ├── checkpoints
+│       │   └── epoch=171-val_loss=1.09-val_acc=0.71.ckpt
+│       ├── media
+│       ├── meta.experiment
+│       ├── meta_tags.csv
+│       ├── metrics.csv
+│       └── tf
+│           └── events.out.tfevents.1615473690.callisto.25112.0
+├── cifar_100.preactresnet18
+│   ├── version_0
+│   │   ├── checkpoints
+│   │   │   └── epoch=00-val_loss=nan-val_acc=0.01.ckpt
+│   │   ├── media
+│   │   ├── meta.experiment
+│   │   ├── meta_tags.csv
+│   │   ├── metrics.csv
+│   │   └── tf
+│   │       └── events.out.tfevents.1615473400.europa.4764.0
+│   ├── version_1
+│   │   ├── checkpoints
+│   │   │   └── epoch=00-val_loss=nan-val_acc=0.01.ckpt
+│   │   ├── media
+│   │   ├── meta.experiment
+│   │   ├── meta_tags.csv
+│   │   ├── metrics.csv
+│   │   └── tf
+│   │       └── events.out.tfevents.1615473812.europa.27921.0
+│   └── version_2
+│       ├── checkpoints
+│       │   └── epoch=189-val_loss=1.03-val_acc=0.76.ckpt
+│       ├── media
+│       ├── meta.experiment
+│       ├── meta_tags.csv
+│       ├── metrics.csv
+│       └── tf
+│           └── events.out.tfevents.1615473920.europa.1589.0
+├── cifar_100.resnet18
+│   └── version_0
+│       ├── checkpoints
+│       │   └── epoch=171-val_loss=0.94-val_acc=0.77.ckpt
+│       ├── media
+│       ├── meta.experiment
+│       ├── meta_tags.csv
+│       ├── metrics.csv
+│       └── tf
+│           └── events.out.tfevents.1615473382.europa.4331.0
+├── cifar_100.shufflenetv2
+│   └── version_0
+│       ├── checkpoints
+│       │   └── epoch=182-val_loss=1.08-val_acc=0.74.ckpt
+│       ├── media
+│       ├── meta.experiment
+│       ├── meta_tags.csv
+│       ├── metrics.csv
+│       └── tf
+│           └── events.out.tfevents.1615473740.callisto.26330.0
+└── cifar_100.vgg16_bn
+    ├── version_0
+    │   ├── checkpoints
+    │   │   └── epoch=103-val_loss=1.39-val_acc=0.65.ckpt
+    │   ├── media
+    │   ├── meta.experiment
+    │   ├── meta_tags.csv
+    │   ├── metrics.csv
+    │   └── tf
+    │       └── events.out.tfevents.1615473387.europa.4381.0
+    ├── version_1
+    │   ├── checkpoints
+    │   │   └── epoch=68-val_loss=1.42-val_acc=0.64.ckpt
+    │   ├── media
+    │   ├── meta.experiment
+    │   ├── meta_tags.csv
+    │   ├── metrics.csv
+    │   └── tf
+    │       └── events.out.tfevents.1615517599.europa.18279.0
+    └── version_2
+        ├── checkpoints
+        │   └── epoch=98-val_loss=1.42-val_acc=0.64.ckpt
+        ├── media
+        ├── meta.experiment
+        ├── meta_tags.csv
+        ├── metrics.csv
+        └── tf
+            └── events.out.tfevents.1615517625.europa.18977.0
+
+41 directories, 45 files
