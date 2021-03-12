@@ -15,7 +15,7 @@ from pytorch_lightning.metrics.functional import accuracy
 class LiMTinyImageNet(pl.LightningModule):
     
     def __init__(self, data_dir='~/data',
-                    arch='ResNet18', 
+                    arch='resnet18', 
                     learning_rate=0.001, 
                     momentum=0.9,
                     weight_decay=5e-4, 
@@ -42,7 +42,7 @@ class LiMTinyImageNet(pl.LightningModule):
                 transforms.ToTensor(),
             ]),
         }
-        module = importlib.import_module("models.tinyimagenet")
+        module = importlib.import_module("models.tinyimagenet224")
         self.model = getattr(module, arch)()
         self.criterion = nn.CrossEntropyLoss()
 
@@ -89,11 +89,11 @@ class LiMTinyImageNet(pl.LightningModule):
 
     def setup(self, stage=None):
         self.trainset = torchvision.datasets.ImageFolder(
-            root=os.path.join(self.data_dir, 'tiny-imagenet-200', 'train'), 
+            root=os.path.join(self.data_dir, 'tiny-imagenet-200-224', 'train'), 
             transform=self.data_transforms['train'])
 
         self.valset = torchvision.datasets.ImageFolder(
-            root=os.path.join(self.data_dir, 'tiny-imagenet-200', 'val'), 
+            root=os.path.join(self.data_dir, 'tiny-imagenet-200-224', 'val'), 
             transform=self.data_transforms['val'])
 
     def train_dataloader(self):
