@@ -49,7 +49,7 @@ def main(hparams):
         name=hparams.expr_name, 
         description=hparams.expr_desc,
         create_git_tag=True)
-    
+
     logger.experiment.tag(vars(hparams)) 
     checkpoint_callback = ModelCheckpoint(
         filename='{epoch:02d}-{val_loss:.2f}-{val_acc:.2f}',
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     parser.add_argument('--expr_desc', default='The detail description of the experiment', 
                         type=str, help='The detail description of the experiment' )
     parser.add_argument('--dataset', default='cifar10', 
-                        choices=['cifar10', 'cifar100', 'mnist', 'tinyimagenet', 'imagenette', 'imagenet'],
+                        choices=['cifar10', 'cifar100', 'mnist', 'tinyimagenet', 'tinyimagenet224', 'imagenette', 'imagenet'],
                         type=str, help='dataset name' )
     parser.add_argument('--arch', default='ResNet18', type=str, help='network architecture.' )
     parser.add_argument('--gpus', default=4, type=int, help='number of GPUs to train on' )
