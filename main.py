@@ -45,7 +45,11 @@ def main(hparams):
             momentum=hparams.momentum, 
             batch_size=hparams.batch_size, )        
 
-    logger = TestTubeLogger("tb_logs", name=hparams.expr_name, description=hparams.expr_desc,)
+    logger = TestTubeLogger("tb_logs", 
+        name=hparams.expr_name, 
+        description=hparams.expr_desc,
+        create_git_tag=True)
+    
     logger.experiment.tag(vars(hparams)) 
     checkpoint_callback = ModelCheckpoint(
         filename='{epoch:02d}-{val_loss:.2f}-{val_acc:.2f}',

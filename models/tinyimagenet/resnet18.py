@@ -1,4 +1,5 @@
 import torchvision.models as models
+from torch import nn
 
 def resnet18():
 	#Load Resnet18 with pretrained weights
