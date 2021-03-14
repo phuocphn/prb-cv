@@ -13,7 +13,7 @@ from pytorch_lightning.metrics.functional import accuracy
 
 
 class LiMImagenette(pl.LightningModule):
-    def __init__(self, data_dir='~/data',
+    def __init__(self, data_dir='~/data/imagenette2',
                     arch='resnet18', 
                     learning_rate=0.1, 
                     momentum=0.9,
