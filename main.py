@@ -92,7 +92,7 @@ def main(hparams):
             max_epochs=hparams.epochs, 
             deterministic=hparams.deterministic, 
             progress_bar_refresh_rate=20, 
-            distributed_backend='dp', 
+            distributed_backend=hparams.distributed_backend, 
             weights_summary='full')
     trainer.fit(model)
     trainer.test()
@@ -107,6 +107,8 @@ if __name__ == '__main__':
                         choices=['cifar10', 'cifar100', 'mnist', 'tinyimagenet', 'tinyimagenet224', 'imagenette', 'imagenet'],
                         type=str, help='dataset name' )
     parser.add_argument('--arch', default='ResNet18', type=str, help='network architecture.' )
+    parser.add_argument('--distributed_backend', default='dp', type=str, help='distributed backend.' )
+
     parser.add_argument('--gpus', default=4, type=int, help='number of GPUs to train on' )
     parser.add_argument('--epochs', default=200, type=int, metavar='N',
                     help='number of total epochs to run')
