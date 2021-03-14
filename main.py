@@ -19,6 +19,8 @@ from cifar100 import LiMCIFAR100
 from tinyimagenet import LiMTinyImageNet
 from tinyimagenet224 import LiMTinyImageNet224
 from imagenette import LiMImagenette
+from imagenet import LiMImagenet
+
 
 def main(hparams):
     if hparams.dataset == 'mnist':
@@ -55,6 +57,12 @@ def main(hparams):
             batch_size=hparams.batch_size, ) 
     elif hparams.dataset == 'imagenette':
         model = LiMImagenette(arch=hparams.arch,
+            learning_rate=hparams.lr, 
+            weight_decay=hparams.weight_decay, 
+            momentum=hparams.momentum, 
+            batch_size=hparams.batch_size, ) 
+    elif hparams.dataset == 'imagenet':
+        model = LiMImagenet(arch=hparams.arch,
             learning_rate=hparams.lr, 
             weight_decay=hparams.weight_decay, 
             momentum=hparams.momentum, 
