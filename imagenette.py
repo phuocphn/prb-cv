@@ -12,14 +12,13 @@ import pytorch_lightning as pl
 from pytorch_lightning.metrics.functional import accuracy
 
 
-class LiMTinyImageNet224(pl.LightningModule):
-    #https://github.com/tjmoon0104/Tiny-ImageNet-Classifier/blob/master/ResNet18_224.ipynb
+class LiMImagenette(pl.LightningModule):
     def __init__(self, data_dir='~/data',
                     arch='resnet18', 
-                    learning_rate=0.001, 
+                    learning_rate=0.1, 
                     momentum=0.9,
                     weight_decay=5e-4, 
-                    num_workers=2, batch_size=128):
+                    num_workers=4, batch_size=256):
 
         super().__init__()
 
@@ -33,16 +32,25 @@ class LiMTinyImageNet224(pl.LightningModule):
         self.batch_size = batch_size
 
         # Hardcode some dataset specific attributes
-        self.data_transforms = {
-            'train': transforms.Compose([
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-            ]),
-            'val': transforms.Compose([
-                transforms.ToTensor(),
-            ]),
-        }
-        module = importlib.import_module("models.tinyimagenet224")
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+
+        self.train_transform = transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize,
+        ])
+
+        self.test_transform = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            normalize,
+        ])
+
+
+        module = importlib.import_module("models.imagenette")
         self.model = getattr(module, arch)()
         self.criterion = nn.CrossEntropyLoss()
 
@@ -79,7 +87,7 @@ class LiMTinyImageNet224(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate, momentum=self.momentum, weight_decay=self.weight_decay)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=90)
         return [optimizer], [scheduler]
 
 
@@ -89,12 +97,12 @@ class LiMTinyImageNet224(pl.LightningModule):
 
     def setup(self, stage=None):
         self.trainset = torchvision.datasets.ImageFolder(
-            root=os.path.join(self.data_dir, 'tiny-imagenet-200-224', 'train'), 
-            transform=self.data_transforms['train'])
+            root=os.path.join(self.data_dir, 'train'), 
+            transform=self.train_transform)
 
         self.valset = torchvision.datasets.ImageFolder(
-            root=os.path.join(self.data_dir, 'tiny-imagenet-200-224', 'val'), 
-            transform=self.data_transforms['val'])
+            root=os.path.join(self.data_dir, 'val'), 
+            transform=self.test_transform)
 
     def train_dataloader(self):
         return DataLoader(self.trainset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)

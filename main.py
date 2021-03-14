@@ -18,7 +18,7 @@ from cifar10 import LiMCIFAR10
 from cifar100 import LiMCIFAR100
 from tinyimagenet import LiMTinyImageNet
 from tinyimagenet224 import LiMTinyImageNet224
-
+from imagenette import LiMImagenette
 
 def main(hparams):
     if hparams.dataset == 'mnist':
@@ -53,6 +53,13 @@ def main(hparams):
             weight_decay=hparams.weight_decay, 
             momentum=hparams.momentum, 
             batch_size=hparams.batch_size, ) 
+    elif hparams.dataset == 'imagenette':
+        model = LiMImagenette(arch=hparams.arch,
+            learning_rate=hparams.lr, 
+            weight_decay=hparams.weight_decay, 
+            momentum=hparams.momentum, 
+            batch_size=hparams.batch_size, ) 
+
 
     logger = TestTubeLogger("tb_logs", 
         name=hparams.expr_name, 
