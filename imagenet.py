@@ -17,7 +17,7 @@ class LiMImagenet(pl.LightningModule):
                     arch='resnet18', 
                     learning_rate=0.1, 
                     momentum=0.9,
-                    weight_decay=5e-4, 
+                    weight_decay=1e-4, 
                     num_workers=4, batch_size=256):
 
         super().__init__()
