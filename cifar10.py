@@ -53,7 +53,7 @@ class LiMCIFAR10(pl.LightningModule):
         return self.model(x)
 
     def on_epoch_start(self):
-        self.logger.experiment.add_scalar('lr', self.trainer.optimizers[0].param_groups[0]['lr'])
+        self.logger.experiment.add_scalar('lr', self.trainer.optimizers[0].param_groups[0]['lr'], self.current_epoch)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
