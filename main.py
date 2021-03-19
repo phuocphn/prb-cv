@@ -94,8 +94,12 @@ def main(hparams):
             progress_bar_refresh_rate=20, 
             distributed_backend=hparams.distributed_backend, 
             weights_summary='full')
+
+    if hparams.evaluate:
+        trainer.test()
+        return 
+
     trainer.fit(model)
-    trainer.test()
 
 
 if __name__ == '__main__':
@@ -126,11 +130,12 @@ if __name__ == '__main__':
     parser.add_argument('--wd', '--weight-decay', default=5e-4, type=float,
                         metavar='W', help='weight decay (default: 1e-4)',
                         dest='weight_decay')
-    parser.add_argument('--resume', default=None, type=str, metavar='PATH',
-                    help='path to latest checkpoint (default: none)')
     parser.add_argument('--gamma', type=float, default=0.7, metavar='M',
                         help='Learning rate step gamma (default: 0.7)')
-
+    parser.add_argument('--resume', default=None, type=str, metavar='PATH',
+                    help='path to latest checkpoint (default: none)')
+    parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
+                    help='evaluate model on validation set')
     args = parser.parse_args()
 
     main(args)
