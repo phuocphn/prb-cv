@@ -37,11 +37,13 @@ def main(hparams):
             batch_size=hparams.batch_size, )
 
     elif hparams.dataset == 'cifar100':
-        model = LiMCIFAR100(arch=hparams.arch,
-            learning_rate=hparams.lr, 
-            weight_decay=hparams.weight_decay, 
-            momentum=hparams.momentum, 
-            batch_size=hparams.batch_size, )
+        model = LiMCIFAR100(hparams=vars(hparams))
+
+        # model = LiMCIFAR100(arch=hparams.arch,
+        #     learning_rate=hparams.lr, 
+        #     weight_decay=hparams.weight_decay, 
+        #     momentum=hparams.momentum, 
+        #     batch_size=hparams.batch_size, )
     elif hparams.dataset == 'tinyimagenet':
         model = LiMTinyImageNet(arch=hparams.arch,
             learning_rate=hparams.lr, 
@@ -75,6 +77,7 @@ def main(hparams):
         create_git_tag=True)
 
     logger.experiment.tag(vars(hparams)) 
+    logger.experiment.tag({'_model': str(model)})
     checkpoint_callback = ModelCheckpoint(
         filename='{epoch:02d}-{val_loss:.2f}-{val_acc:.2f}',
         save_top_k=1,
@@ -110,6 +113,10 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', default='cifar10', 
                         choices=['cifar10', 'cifar100', 'mnist', 'tinyimagenet', 'tinyimagenet224', 'imagenette', 'imagenet'],
                         type=str, help='dataset name' )
+    parser.add_argument('--train_scheme', default='fp32', 
+                        choices=['fp32', 'lsq', 'uniq', 'x', 'y', 'z'],
+                        type=str, help='training scheme' )
+
     parser.add_argument('--arch', default='ResNet18', type=str, help='network architecture.' )
     parser.add_argument('--distributed_backend', default='dp', type=str, help='distributed backend.' )
 
@@ -136,6 +143,9 @@ if __name__ == '__main__':
                     help='path to latest checkpoint (default: none)')
     parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
+    parser.add_argument('--bit', default=4, type=int,
+                        help='quantization bit-width', dest='bit')
+
     args = parser.parse_args()
 
     main(args)
