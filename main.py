@@ -21,6 +21,28 @@ from tinyimagenet224 import LiMTinyImageNet224
 from imagenette import LiMImagenette
 from imagenet import LiMImagenet
 
+from pytorch_lightning.trainer.connectors.checkpoint_connector import CheckpointConnector
+from pytorch_lightning.core.lightning import LightningModule
+
+class LSQCheckpointConnector(CheckpointConnector):
+    def __init__(self, *args, **kwargs):
+        super(LSQCheckpointConnector, self).__init__(*args, **kwargs)
+    def restore_model_state(self, model: LightningModule, checkpoint) -> None:
+        """
+        Restore model states from a 'PyTorch-Lightning checkpoint' dictionary object
+        """
+
+        # restore datamodule states
+        if self.trainer.datamodule is not None:
+            self.trainer.datamodule.on_load_checkpoint(checkpoint)
+
+        # hook: give user access to checkpoint if needed.
+        model.on_load_checkpoint(checkpoint)
+
+        # restore model state_dict
+        model.load_state_dict(checkpoint['state_dict'])
+
+
 
 def main(hparams):
     if hparams.dataset == 'mnist':
@@ -97,6 +119,8 @@ def main(hparams):
             progress_bar_refresh_rate=20, 
             distributed_backend=hparams.distributed_backend, 
             weights_summary='full')
+    
+    trainer.checkpoint_connector = LSQCheckpointConnector(trainer)
 
     if hparams.evaluate:
         trainer.test()
