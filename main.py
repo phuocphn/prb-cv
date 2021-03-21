@@ -109,6 +109,13 @@ def main(hparams):
         prefix=''
     )
 
+    # weight initlization
+    if hparams.init_from:
+        checkpoint = torch.load(hparams.init_from)
+        _state_dict = model.state_dict()
+        _state_dict.update(checkpoint['state_dict'])
+        model.load_state_dict(_state_dict)
+
     trainer = pl.Trainer(gpus=hparams.gpus, 
             logger=logger,
             # callbacks=[checkpoint_callback],
@@ -119,7 +126,7 @@ def main(hparams):
             progress_bar_refresh_rate=20, 
             distributed_backend=hparams.distributed_backend, 
             weights_summary='full')
-    
+
     trainer.checkpoint_connector = LSQCheckpointConnector(trainer)
 
     if hparams.evaluate:
@@ -165,6 +172,8 @@ if __name__ == '__main__':
                         help='Learning rate step gamma (default: 0.7)')
     parser.add_argument('--resume', default=None, type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
+    parser.add_argument('--init_from', default=None, type=str, metavar='INIT',
+                    help='path to checkpoint for weight initalization (default: none)')
     parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
     parser.add_argument('--bit', default=4, type=int,
