@@ -21,6 +21,28 @@ from tinyimagenet224 import LiMTinyImageNet224
 from imagenette import LiMImagenette
 from imagenet import LiMImagenet
 
+from pytorch_lightning.trainer.connectors.checkpoint_connector import CheckpointConnector
+from pytorch_lightning.core.lightning import LightningModule
+
+class LSQCheckpointConnector(CheckpointConnector):
+    def __init__(self, *args, **kwargs):
+        super(LSQCheckpointConnector, self).__init__(*args, **kwargs)
+    def restore_model_state(self, model: LightningModule, checkpoint) -> None:
+        """
+        Restore model states from a 'PyTorch-Lightning checkpoint' dictionary object
+        """
+
+        # restore datamodule states
+        if self.trainer.datamodule is not None:
+            self.trainer.datamodule.on_load_checkpoint(checkpoint)
+
+        # hook: give user access to checkpoint if needed.
+        model.on_load_checkpoint(checkpoint)
+
+        # restore model state_dict
+        model.load_state_dict(checkpoint['state_dict'])
+
+
 
 def main(hparams):
     if hparams.dataset == 'mnist':
@@ -37,11 +59,13 @@ def main(hparams):
             batch_size=hparams.batch_size, )
 
     elif hparams.dataset == 'cifar100':
-        model = LiMCIFAR100(arch=hparams.arch,
-            learning_rate=hparams.lr, 
-            weight_decay=hparams.weight_decay, 
-            momentum=hparams.momentum, 
-            batch_size=hparams.batch_size, )
+        model = LiMCIFAR100(hparams=vars(hparams))
+
+        # model = LiMCIFAR100(arch=hparams.arch,
+        #     learning_rate=hparams.lr, 
+        #     weight_decay=hparams.weight_decay, 
+        #     momentum=hparams.momentum, 
+        #     batch_size=hparams.batch_size, )
     elif hparams.dataset == 'tinyimagenet':
         model = LiMTinyImageNet(arch=hparams.arch,
             learning_rate=hparams.lr, 
@@ -75,6 +99,7 @@ def main(hparams):
         create_git_tag=True)
 
     logger.experiment.tag(vars(hparams)) 
+    logger.experiment.tag({'_model': str(model)})
     checkpoint_callback = ModelCheckpoint(
         filename='{epoch:02d}-{val_loss:.2f}-{val_acc:.2f}',
         save_top_k=1,
@@ -83,6 +108,13 @@ def main(hparams):
         mode='min',
         prefix=''
     )
+
+    # weight initlization
+    if hparams.init_from:
+        checkpoint = torch.load(hparams.init_from)
+        _state_dict = model.state_dict()
+        _state_dict.update(checkpoint['state_dict'])
+        model.load_state_dict(_state_dict)
 
     trainer = pl.Trainer(gpus=hparams.gpus, 
             logger=logger,
@@ -94,6 +126,8 @@ def main(hparams):
             progress_bar_refresh_rate=20, 
             distributed_backend=hparams.distributed_backend, 
             weights_summary='full')
+
+    trainer.checkpoint_connector = LSQCheckpointConnector(trainer)
 
     if hparams.evaluate:
         trainer.test()
@@ -110,6 +144,10 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', default='cifar10', 
                         choices=['cifar10', 'cifar100', 'mnist', 'tinyimagenet', 'tinyimagenet224', 'imagenette', 'imagenet'],
                         type=str, help='dataset name' )
+    parser.add_argument('--train_scheme', default='fp32', 
+                        choices=['fp32', 'lsq', 'uniq', 'x', 'y', 'z'],
+                        type=str, help='training scheme' )
+
     parser.add_argument('--arch', default='ResNet18', type=str, help='network architecture.' )
     parser.add_argument('--distributed_backend', default='dp', type=str, help='distributed backend.' )
 
@@ -134,8 +172,13 @@ if __name__ == '__main__':
                         help='Learning rate step gamma (default: 0.7)')
     parser.add_argument('--resume', default=None, type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
+    parser.add_argument('--init_from', default=None, type=str, metavar='INIT',
+                    help='path to checkpoint for weight initalization (default: none)')
     parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
+    parser.add_argument('--bit', default=4, type=int,
+                        help='quantization bit-width', dest='bit')
+
     args = parser.parse_args()
 
     main(args)

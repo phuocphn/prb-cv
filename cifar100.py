@@ -14,23 +14,25 @@ from pytorch_lightning.metrics.functional import accuracy
 
 class LiMCIFAR100(pl.LightningModule):
     
-    def __init__(self, data_dir='~/data',
-                    arch='ResNet18', 
-                    learning_rate=0.1, 
-                    momentum=0.9,
-                    weight_decay=5e-4, 
-                    num_workers=2, batch_size=128):
-
+    def __init__(self, hparams):
+                    #data_dir='~/data',
+                    #arch='ResNet18', 
+                    #learning_rate=0.1, 
+                    #momentum=0.9,
+                    #weight_decay=5e-4, 
+                    #num_workers=2, batch_size=128, *args, **kwargs):
         super().__init__()
 
         # Set our init args as class attributes
-        self.data_dir = os.path.expanduser(data_dir)
+        arch = hparams.get("arch")
+        train_scheme = hparams.get("train_scheme",)
 
-        self.learning_rate = learning_rate
-        self.weight_decay = weight_decay
-        self.momentum = momentum
-        self.num_workers = num_workers
-        self.batch_size = batch_size
+        self.data_dir = os.path.expanduser(hparams.get("data_dir", "~/data"))
+        self.learning_rate = hparams.get("lr")
+        self.weight_decay = hparams.get("weight_decay")
+        self.momentum = hparams.get("momentum")
+        self.batch_size = hparams.get("batch_size")
+        self.num_workers = hparams.get("num_workers", 4)
 
         # Hardcode some dataset specific attributes
         self.num_classes = 10
@@ -50,8 +52,15 @@ class LiMCIFAR100(pl.LightningModule):
                 std=(0.2673342858792401, 0.2564384629170883, 0.27615047132568404))
         ])
 
-        module = importlib.import_module("models.cifar100")
-        self.model = getattr(module, arch)()
+        if train_scheme != "fp32":
+            module = importlib.import_module("models.cifar100.quan_models")
+            bit = hparams.get("bit")
+            self.model = getattr(module, arch)(bit=bit)
+
+        else:
+            module = importlib.import_module("models.cifar100")
+            self.model = getattr(module, arch)()
+
         self.criterion = nn.CrossEntropyLoss()
 
     def forward(self, x):
