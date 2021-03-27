@@ -1,0 +1,28 @@
+(python37-env) phuocphn@europa:~/prb-cv$ git show
+commit 1109250daec50455ea6fd1fbb9ef7afede719308
+Author: phuocphn <phuocphn@gmail.com>
+Date:   Tue Mar 16 13:56:34 2021 +0900
+
+    set weight decay default value to 1e-4
+
+diff --git a/imagenet.py b/imagenet.py
+index dcfb7e3..7a25353 100644
+--- a/imagenet.py
++++ b/imagenet.py
+@@ -17,7 +17,7 @@ class LiMImagenet(pl.LightningModule):
+                     arch='resnet18', 
+                     learning_rate=0.1, 
+                     momentum=0.9,
+-                    weight_decay=5e-4, 
++                    weight_decay=1e-4, 
+                     num_workers=4, batch_size=256):
+ 
+         super().__init__()
+(python37-env) phuocphn@europa:~/prb-cv$ python main.py --gpus 4 --epochs 90 --dataset imagenet --arch resnet18 -b 256 --wd 1e-4 --lr 0.1 --expr_name imagenet.resnet18 --expr_desc "First train ImageNet with Pytorch Lightning"  --distributed_backend dp
+
+accuracy: 71.6%
+(python37-env) phuocphn@europa:~/prb-cv$ cp -r tb_logs/ ~/tmp_copy/
+
+---------------------------
+
+

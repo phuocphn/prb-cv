@@ -1,0 +1,25 @@
+logs
+--------
+
+git clone https://github.com/phuocphn/prb-cv.git
+cd prb-cv && git checkout 
+git checkout feature && git checkout bff70e809f8d3f8f0e4a9fcb481085c2a6ef6431
+
+python main.py --gpus 4 --epochs 200 --arch preactresnet18 --lr 0.05 --wd 5e-4  --dataset cifar100 --train_scheme fp32 --bit 32 --expr_name cifar100.preactresnet18.fp32.lr=0.05 --expr_desc "Train Pre-ResNet18 with CIFAR-100 (full-precision) Lr=0.05"
+75.0
+
+python main.py --gpus 4 --epochs 200 --arch preactresnet18 --lr 0.1 --wd 5e-4  --dataset cifar100 --train_scheme fp32 --bit 32 --expr_name cifar100.preactresnet18.fp32.lr=0.1 --expr_desc "Train Pre-ResNet18 with CIFAR-100 (full-precision) Lr=0.1"
+
+--> nan
+
+
+LSQ
+python main.py --gpus 4 --epochs 200 --arch preactresnet18 --lr 0.01 --wd 5e-4  --dataset cifar100 --train_scheme lsq --bit 2 --expr_name cifar100.preactresnet18.lsq.2bit --expr_desc "Train Pre-ResNet18 with CIFAR-100 (full-precision) Lr=0.01" --init_from /home/phuocphn/prb-cv/tb_logs/cifar100.preactresnet18.fp32.lr=0.05/version_0/checkpoints/epoch=188-val_loss=1.04-val_acc=0.75.ckpt
+73.7
+
+python main.py --gpus 4 --epochs 200 --arch preactresnet18 --lr 0.01 --wd 5e-4  --dataset cifar100 --train_scheme lsq --bit 3 --expr_name cifar100.preactresnet18.lsq.3bit --expr_desc "Train Pre-ResNet18 with CIFAR-100 (full-precision) Lr=0.01" --init_from /home/phuocphn/prb-cv/tb_logs/cifar100.preactresnet18.fp32.lr=0.05/version_0/checkpoints/epoch=188-val_loss=1.04-val_acc=0.75.ckpt
+74.9
+
+python main.py --gpus 4 --epochs 200 --arch preactresnet18 --lr 0.01 --wd 5e-4  --dataset cifar100 --train_scheme lsq --bit 4 --expr_name cifar100.preactresnet18.lsq.4bit --expr_desc "Train Pre-ResNet18 with CIFAR-100 (full-precision) Lr=0.01" --init_from /home/phuocphn/prb-cv/tb_logs/cifar100.preactresnet18.fp32.lr=0.05/version_0/checkpoints/epoch=188-val_loss=1.04-val_acc=0.75.ckpt
+76.0
+

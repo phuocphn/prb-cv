@@ -13,117 +13,93 @@ from pytorch_lightning.metrics.functional import accuracy
 from pytorch_lightning.loggers import TestTubeLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-class LiMCIFAR10(pl.LightningModule):
-    
-    def __init__(self, data_dir='~/data',
-                    arch='ResNet18', 
-                    learning_rate=0.1, 
-                    momentum=0.9,
-                    weight_decay=5e-4, 
-                    num_workers=2, batch_size=128):
+from mnist import LiMMNIST
+from cifar10 import LiMCIFAR10
+from cifar100 import LiMCIFAR100
+from tinyimagenet import LiMTinyImageNet
+from tinyimagenet224 import LiMTinyImageNet224
+from imagenette import LiMImagenette
+from imagenet import LiMImagenet
 
-        super().__init__()
+from pytorch_lightning.trainer.connectors.checkpoint_connector import CheckpointConnector
+from pytorch_lightning.core.lightning import LightningModule
 
-        # Set our init args as class attributes
-        self.data_dir = os.path.expanduser(data_dir)
+class LSQCheckpointConnector(CheckpointConnector):
+    def __init__(self, *args, **kwargs):
+        super(LSQCheckpointConnector, self).__init__(*args, **kwargs)
+    def restore_model_state(self, model: LightningModule, checkpoint) -> None:
+        """
+        Restore model states from a 'PyTorch-Lightning checkpoint' dictionary object
+        """
 
-        self.learning_rate = learning_rate
-        self.weight_decay = weight_decay
-        self.momentum = momentum
-        self.num_workers = num_workers
-        self.batch_size = batch_size
+        # restore datamodule states
+        if self.trainer.datamodule is not None:
+            self.trainer.datamodule.on_load_checkpoint(checkpoint)
 
-        # Hardcode some dataset specific attributes
-        self.num_classes = 10
+        # hook: give user access to checkpoint if needed.
+        model.on_load_checkpoint(checkpoint)
 
-        self.transform_train = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-        ])
+        # restore model state_dict
+        model.load_state_dict(checkpoint['state_dict'])
 
-        self.transform_test = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-        ])
-
-        module = importlib.import_module("models.cifar10")
-        self.model = getattr(module, arch)()
-        self.criterion = nn.CrossEntropyLoss()
-
-    def forward(self, x):
-        return self.model(x)
-
-    def on_epoch_start(self):
-        self.logger.experiment.add_scalar('lr', self.trainer.optimizers[0].param_groups[0]['lr'])
-
-    def training_step(self, batch, batch_idx):
-        x, y = batch
-        outputs = self.forward(x)
-        loss = self.criterion(outputs, y) 
-
-        # Tensorboard logs 
-        self.log('train_loss', loss, prog_bar=False)
-        return loss
-
-    def validation_step(self, batch, batch_idx):
-        x, y = batch
-        outputs = self.forward(x)
-        loss = self.criterion(outputs, y) 
-        preds = torch.argmax(outputs, dim=1)
-        acc = accuracy(preds, y)
-
-        # Calling self.log will surface up scalars for you in TensorBoard
-        self.log('val_loss', loss, prog_bar=True)
-        self.log('val_acc', acc, prog_bar=True)
-        return loss
-
-    def test_step(self, batch, batch_idx):
-        # Here we just reuse the validation_step for testing
-        return self.validation_step(batch, batch_idx)
-
-    def configure_optimizers(self):
-        optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate, momentum=self.momentum, weight_decay=self.weight_decay)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
-        return [optimizer], [scheduler]
-
-
-    def prepare_data(self):
-        torchvision.datasets.CIFAR10(root=self.data_dir, train=True, download=True, transform=self.transform_train)
-        torchvision.datasets.CIFAR10(root=self.data_dir, train=False, download=True, transform=self.transform_test)
-
-
-    def setup(self, stage=None):
-        # if stage == 'fit' or stage is None:
-        self.trainset = torchvision.datasets.CIFAR10(
-                root=self.data_dir, 
-                train=True, 
-                download=True, 
-                transform=self.transform_train)
-
-        # if stage == 'test' or stage is None:
-        self.valset = torchvision.datasets.CIFAR10(
-                root=self.data_dir, 
-                train=False, 
-                download=True, 
-                transform=self.transform_test)
-
-    def train_dataloader(self):
-        return DataLoader(self.trainset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
-
-    def val_dataloader(self):
-        return DataLoader(self.valset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
 
 
 def main(hparams):
-    model = LiMCIFAR10(arch=hparams.arch,
-        learning_rate=hparams.lr, 
-        weight_decay=hparams.weight_decay, 
-        momentum=hparams.momentum, 
-        batch_size=hparams.batch_size, )
-    logger = TestTubeLogger("tb_logs", name=hparams.expr_name, description=hparams.expr_desc,)
+    if hparams.dataset == 'mnist':
+        model = LiMMNIST(arch=hparams.arch,
+            gamma=hparams.gamma,
+            learning_rate=hparams.lr, 
+            batch_size=hparams.batch_size, )
+
+    elif hparams.dataset == 'cifar10':
+        model = LiMCIFAR10(arch=hparams.arch,
+            learning_rate=hparams.lr, 
+            weight_decay=hparams.weight_decay, 
+            momentum=hparams.momentum, 
+            batch_size=hparams.batch_size, )
+
+    elif hparams.dataset == 'cifar100':
+        model = LiMCIFAR100(hparams=vars(hparams))
+
+        # model = LiMCIFAR100(arch=hparams.arch,
+        #     learning_rate=hparams.lr, 
+        #     weight_decay=hparams.weight_decay, 
+        #     momentum=hparams.momentum, 
+        #     batch_size=hparams.batch_size, )
+    elif hparams.dataset == 'tinyimagenet':
+        model = LiMTinyImageNet(arch=hparams.arch,
+            learning_rate=hparams.lr, 
+            weight_decay=hparams.weight_decay, 
+            momentum=hparams.momentum, 
+            batch_size=hparams.batch_size, ) 
+
+    elif hparams.dataset == 'tinyimagenet224':
+        model = LiMTinyImageNet224(arch=hparams.arch,
+            learning_rate=hparams.lr, 
+            weight_decay=hparams.weight_decay, 
+            momentum=hparams.momentum, 
+            batch_size=hparams.batch_size, ) 
+    elif hparams.dataset == 'imagenette':
+        model = LiMImagenette(arch=hparams.arch,
+            learning_rate=hparams.lr, 
+            weight_decay=hparams.weight_decay, 
+            momentum=hparams.momentum, 
+            batch_size=hparams.batch_size, ) 
+    elif hparams.dataset == 'imagenet':
+        model = LiMImagenet(arch=hparams.arch,
+            learning_rate=hparams.lr, 
+            weight_decay=hparams.weight_decay, 
+            momentum=hparams.momentum, 
+            batch_size=hparams.batch_size, ) 
+
+
+    logger = TestTubeLogger("tb_logs", 
+        name=hparams.expr_name, 
+        description=hparams.expr_desc,
+        create_git_tag=True)
+
     logger.experiment.tag(vars(hparams)) 
+    logger.experiment.tag({'_model': str(model)})
     checkpoint_callback = ModelCheckpoint(
         filename='{epoch:02d}-{val_loss:.2f}-{val_acc:.2f}',
         save_top_k=1,
@@ -133,6 +109,13 @@ def main(hparams):
         prefix=''
     )
 
+    # weight initlization
+    if hparams.init_from:
+        checkpoint = torch.load(hparams.init_from)
+        _state_dict = model.state_dict()
+        _state_dict.update(checkpoint['state_dict'])
+        model.load_state_dict(_state_dict)
+
     trainer = pl.Trainer(gpus=hparams.gpus, 
             logger=logger,
             # callbacks=[checkpoint_callback],
@@ -141,10 +124,16 @@ def main(hparams):
             max_epochs=hparams.epochs, 
             deterministic=hparams.deterministic, 
             progress_bar_refresh_rate=20, 
-            distributed_backend='dp', 
+            distributed_backend=hparams.distributed_backend, 
             weights_summary='full')
+
+    trainer.checkpoint_connector = LSQCheckpointConnector(trainer)
+
+    if hparams.evaluate:
+        trainer.test()
+        return 
+
     trainer.fit(model)
-    trainer.test()
 
 
 if __name__ == '__main__':
@@ -152,10 +141,18 @@ if __name__ == '__main__':
     parser.add_argument('--expr_name', default='cifar_10', type=str, help='the name of experiment' )
     parser.add_argument('--expr_desc', default='The detail description of the experiment', 
                         type=str, help='The detail description of the experiment' )
+    parser.add_argument('--dataset', default='cifar10', 
+                        choices=['cifar10', 'cifar100', 'mnist', 'tinyimagenet', 'tinyimagenet224', 'imagenette', 'imagenet'],
+                        type=str, help='dataset name' )
+    parser.add_argument('--train_scheme', default='fp32', 
+                        choices=['fp32', 'lsq', 'uniq', 'x', 'y', 'z'],
+                        type=str, help='training scheme' )
 
     parser.add_argument('--arch', default='ResNet18', type=str, help='network architecture.' )
+    parser.add_argument('--distributed_backend', default='dp', type=str, help='distributed backend.' )
+
     parser.add_argument('--gpus', default=4, type=int, help='number of GPUs to train on' )
-    parser.add_argument('--epochs', default=90, type=int, metavar='N',
+    parser.add_argument('--epochs', default=200, type=int, metavar='N',
                     help='number of total epochs to run')
     parser.add_argument('--deterministic', dest='deterministic', action='store_true',
                     help='enable deterministic training')
@@ -171,8 +168,16 @@ if __name__ == '__main__':
     parser.add_argument('--wd', '--weight-decay', default=5e-4, type=float,
                         metavar='W', help='weight decay (default: 1e-4)',
                         dest='weight_decay')
+    parser.add_argument('--gamma', type=float, default=0.7, metavar='M',
+                        help='Learning rate step gamma (default: 0.7)')
     parser.add_argument('--resume', default=None, type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
+    parser.add_argument('--init_from', default=None, type=str, metavar='INIT',
+                    help='path to checkpoint for weight initalization (default: none)')
+    parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
+                    help='evaluate model on validation set')
+    parser.add_argument('--bit', default=4, type=int,
+                        help='quantization bit-width', dest='bit')
 
     args = parser.parse_args()
 
