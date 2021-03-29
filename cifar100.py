@@ -52,12 +52,14 @@ class LiMCIFAR100(pl.LightningModule):
                 std=(0.2673342858792401, 0.2564384629170883, 0.27615047132568404))
         ])
 
-        if train_scheme != "fp32":
-            module = importlib.import_module("models.cifar100.quan_models")
+        if train_scheme == "lsq":
+            module = importlib.import_module("models.cifar100.lsq_quan_models")
             bit = hparams.get("bit")
             self.model = getattr(module, arch)(bit=bit)
-
-        else:
+        elif train_scheme == "sw_precision":
+            module = importlib.import_module("models.cifar100.sw_precision_models")
+            self.model = getattr(module, arch)()
+        elif train_scheme == "fp32":
             module = importlib.import_module("models.cifar100")
             self.model = getattr(module, arch)()
 
