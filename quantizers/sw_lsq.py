@@ -60,8 +60,8 @@ class SWConv2dLSQ(nn.Conv2d):
             in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size,
             stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias)
 
-        self.quan_w = LSQQuantizer(bit=8, is_activation=False)
-        self.quan_a = LSQQuantizer(bit=8, is_activation=True)
+        self.quan_w = LSQQuantizer(is_activation=False)
+        self.quan_a = LSQQuantizer(is_activation=True)
 
     def set_quantizer_runtime_bitwidth(self, bit):
         self.quan_w.set_quantizer_runtime_bitwidth(bit)
@@ -85,8 +85,8 @@ class InputSWConv2dLSQ(nn.Conv2d):
             in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size,
             stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias)
 
-        self.quan_w = LSQQuantizer(bit=8, is_activation=False)
-        self.quan_a = LSQQuantizer(bit=8, is_activation=False)
+        self.quan_w = LSQQuantizer(is_activation=False)
+        self.quan_a = LSQQuantizer(is_activation=False)
 
     def set_quantizer_runtime_bitwidth(self, bit):
         self.quan_w.set_quantizer_runtime_bitwidth(bit)
@@ -123,7 +123,7 @@ class SWBatchNorm2d(nn.Module):
         self.affine = affine
 
     def set_quantizer_runtime_bitwidth(self, bit):
-        self.bit = bit`
+        self.bit = bit
 
     def forward(self, input):
         if switchbn:
@@ -141,8 +141,8 @@ class SWBatchNorm2d(nn.Module):
 class SWLinearLSQ(nn.Linear):
     def __init__(self, in_features, out_features, bias=True):
         super(SWLinearLSQ, self).__init__(in_features=in_features, out_features=out_features, bias=bias)
-        self.quan_w = LSQQuantizer(bit=8, is_activation=False)
-        self.quan_a = LSQQuantizer(bit=8, is_activation=True)
+        self.quan_w = LSQQuantizer(is_activation=False)
+        self.quan_a = LSQQuantizer(is_activation=True)
 
     def set_quantizer_runtime_bitwidth(self, bit):
         self.quan_w.set_quantizer_runtime_bitwidth(bit)
