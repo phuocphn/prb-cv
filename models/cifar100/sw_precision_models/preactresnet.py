@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from functools import partial
-from quantizers.lsq import SWConv2dLSQ, InputSWConv2dLSQ, SWLinearLSQ
+from quantizers.sw_lsq import SWConv2dLSQ, InputSWConv2dLSQ, SWLinearLSQ, SWBatchNorm2d
 
 
 class PreActBasic(nn.Module):
@@ -22,10 +22,10 @@ class PreActBasic(nn.Module):
         conv_layer = SWConv2dLSQ
 
         self.residual = nn.Sequential(
-            nn.BatchNorm2d(in_channels),
+            SWBatchNorm2d(in_channels),
             nn.ReLU(inplace=True),
             conv_layer(in_channels, out_channels, kernel_size=3, stride=stride, padding=1),
-            nn.BatchNorm2d(out_channels),
+            SWBatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             conv_layer(out_channels, out_channels * PreActBasic.expansion, kernel_size=3, padding=1)
         )
@@ -50,15 +50,15 @@ class PreActBottleNeck(nn.Module):
         conv_layer = SWConv2dLSQ
 
         self.residual = nn.Sequential(
-            nn.BatchNorm2d(in_channels),
+            SWBatchNorm2d(in_channels),
             nn.ReLU(inplace=True),
             conv_layer(in_channels, out_channels, 1, stride=stride),
 
-            nn.BatchNorm2d(out_channels),
+            SWBatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             conv_layer(out_channels, out_channels, 3, padding=1),
 
-            nn.BatchNorm2d(out_channels),
+            SWBatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             conv_layer(out_channels, out_channels * PreActBottleNeck.expansion, 1)
         )
@@ -98,7 +98,7 @@ class PreActResNet(nn.Module):
 
     def switch_precision(self, bit):
         for n, m in self.named_modules():
-            if type(m) in (SWLinearLSQ, SWConv2dLSQ, InputSWConv2dLSQ):
+            if type(m) in (SWLinearLSQ, SWConv2dLSQ, InputSWConv2dLSQ, SWBatchNorm2d):
                 m.set_quantizer_runtime_bitwidth(bit)
                 print ("switch module: {} to {} precision ".format(n, bit))
 

@@ -100,6 +100,44 @@ class InputSWConv2dLSQ(nn.Conv2d):
             return F.conv2d(self.quan_a(x), self.quan_w(self.weight), self.bias, self.stride,
                             self.padding, self.dilation, self.groups)
 
+bits_list = [8,6,5,4]
+switchbn = True
+class SWBatchNorm2d(nn.Module):
+    def __init__(self, num_features,
+                 eps=1e-05, momentum=0.1,
+                 affine=True):
+        super(SWBatchNorm2d, self).__init__()
+        self.num_features = num_features
+        bns = []
+        for i in range(len(bits_list)):
+            bns.append(nn.BatchNorm2d(num_features, eps=eps, momentum=momentum, affine=affine))
+        self.bn = nn.ModuleList(bns)
+        self.bit = bits_list[-1]
+        self.ignore_model_profiling = True
+        if affine:
+            self.register_parameter('weight', None)
+            self.register_parameter('bias', None)
+        else:
+            self.weight = nn.Parameter(torch.Tensor(self.num_features))
+            self.bias = nn.Parameter(torch.Tensor(self.num_features))
+        self.affine = affine
+
+    def set_quantizer_runtime_bitwidth(self, bit):
+        self.bit = bit`
+
+    def forward(self, input):
+        if switchbn:
+            if self.bit in bits_list:
+                idx = bits_list.index(self.bit)
+            else:
+                idx = 0
+            y = self.bn[idx](input)
+            if not self.affine:
+                y = self.weight[None, :, None, None] * y + self.bias[None, :, None, None]
+        else:
+            y = self.bn[0](input)
+        return y
+
 class SWLinearLSQ(nn.Linear):
     def __init__(self, in_features, out_features, bias=True):
         super(SWLinearLSQ, self).__init__(in_features=in_features, out_features=out_features, bias=bias)
@@ -115,3 +153,4 @@ class SWLinearLSQ(nn.Linear):
             return F.linear(x, self.weight, self.bias)
         else:
             return F.linear(self.quan_a(x), self.quan_w(self.weight), self.bias)
+
