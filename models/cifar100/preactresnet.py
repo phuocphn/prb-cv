@@ -88,7 +88,7 @@ class PreActResNet(nn.Module):
         super().__init__()
         self.input_channels = 64
 
-        self.conv1 = _InputConv2dLSQ(3, 64, 3, padding=1)
+        self.conv1 = nn.Conv2d(3, 64, 3, padding=1)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
 
