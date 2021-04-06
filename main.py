@@ -105,6 +105,7 @@ def main(hparams):
                         loaded_params[new_key] = v
                 else:
                     loaded_params[k] = v
+            _state_dict = model.state_dict()
             _state_dict.update(loaded_params)
         model.load_state_dict(_state_dict)
 
