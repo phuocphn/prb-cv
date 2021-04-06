@@ -25,13 +25,14 @@ class LSQQuantizer(t.nn.Module):
 
         self.alpha = nn.Parameter(torch.Tensor(1))
         self.is_activation = is_activation
-        self.register_buffer('init_state', torch.zeros(1))        
-        
+        self.bit = 8       
+        self.register_buffer('init_state', torch.zeros(1))
+
     def set_quantizer_runtime_bitwidth(self, bit):
         self.bit = bit
 
     def forward(self, x):
-        if is_activation:
+        if self.is_activation:
             Qn = 0
             Qp = 2 ** self.bit - 1
         else:
@@ -62,10 +63,12 @@ class SWConv2dLSQ(nn.Conv2d):
 
         self.quan_w = LSQQuantizer(is_activation=False)
         self.quan_a = LSQQuantizer(is_activation=True)
+        self.bit = 8
 
     def set_quantizer_runtime_bitwidth(self, bit):
         self.quan_w.set_quantizer_runtime_bitwidth(bit)
         self.quan_a.set_quantizer_runtime_bitwidth(bit)
+        self.bit = bit
 
 
     def forward(self, x):
@@ -87,10 +90,12 @@ class InputSWConv2dLSQ(nn.Conv2d):
 
         self.quan_w = LSQQuantizer(is_activation=False)
         self.quan_a = LSQQuantizer(is_activation=False)
+        self.bit = 8
 
     def set_quantizer_runtime_bitwidth(self, bit):
         self.quan_w.set_quantizer_runtime_bitwidth(bit)
         self.quan_a.set_quantizer_runtime_bitwidth(bit)
+        self.bit = bit
 
     def forward(self, x):
         if self.bit == 32:
@@ -143,10 +148,12 @@ class SWLinearLSQ(nn.Linear):
         super(SWLinearLSQ, self).__init__(in_features=in_features, out_features=out_features, bias=bias)
         self.quan_w = LSQQuantizer(is_activation=False)
         self.quan_a = LSQQuantizer(is_activation=True)
+        self.bit = 8
 
     def set_quantizer_runtime_bitwidth(self, bit):
         self.quan_w.set_quantizer_runtime_bitwidth(bit)
         self.quan_a.set_quantizer_runtime_bitwidth(bit)
+        self.bit = bit
 
     def forward(self, x):
         if self.bit == 32:

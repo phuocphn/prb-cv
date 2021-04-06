@@ -35,6 +35,7 @@ from pytorch_lightning.utilities.warnings import WarningCache
 
 
 from pytorch_lightning.trainer.training_loop import TrainLoop
+from pytorch_lightning.trainer.states import RunningStage, TrainerState
 
 class SwitchablePrecisionTrainLoop(TrainLoop):
 
@@ -179,12 +180,12 @@ class SwitchablePrecisionTrainLoop(TrainLoop):
         with self.trainer.profiler.profile("training_step_and_backward"):
             # lightning module hook
             for bw in [8,6,5,4]:
-                self.lightning_module.model.switch_precision(bit=bw)
+                self.trainer.lightning_module.model.switch_precision(bit=bw)
                 result = self.training_step(split_batch, batch_idx, opt_idx, hiddens)
                 if self._curr_step_result == None:
                     self._curr_step_result = result
                 else:
-                    self._curr_step_result = result + self._curr_step_result
+                    self._curr_step_result = result #+ self._curr_step_result
 
 
                 if not self._skip_backward and self.automatic_optimization:
@@ -217,4 +218,100 @@ class SwitchablePrecisionTrainLoop(TrainLoop):
 
         return result
 
- 
+
+    
+def run_evaluation(self, max_batches=None, on_epoch=False):
+
+    # used to know if we are logging for val, test + reset cached results
+    self._set_running_stage(
+        RunningStage.TESTING if self.testing else RunningStage.EVALUATING, self.lightning_module
+    )
+    self.logger_connector.reset()
+
+    # bookkeeping
+    self.evaluation_loop.testing = self.testing
+
+    # prepare dataloaders
+    dataloaders, max_batches = self.evaluation_loop.get_evaluation_dataloaders(max_batches)
+
+    # check if we want to skip this evaluation
+    if self.evaluation_loop.should_skip_evaluation(max_batches):
+        return [], []
+
+    # enable eval mode + no grads
+    self.evaluation_loop.on_evaluation_model_eval()
+    # ref model
+    model = self.lightning_module
+    model.zero_grad()
+    torch.set_grad_enabled(False)
+
+    # hook
+    self.evaluation_loop.on_evaluation_start()
+
+    # set up the eval loop
+    self.evaluation_loop.setup(model, max_batches, dataloaders)
+
+    # hook
+    self.evaluation_loop.on_evaluation_epoch_start()
+    for bw in [8,6,5,4]:
+        self.lightning_module.model.switch_precision(bw)
+        # run validation/testineii
+        for dataloader_idx, dataloader in enumerate(dataloaders):
+            # bookkeeping
+            dl_outputs = []
+            dataloader = self.accelerator.process_dataloader(dataloader)
+            dl_max_batches = self.evaluation_loop.max_batches[dataloader_idx]
+
+            for batch_idx, batch in enumerate(dataloader):
+                if batch is None:
+                    continue
+
+                # stop short when running on limited batches
+                if batch_idx >= dl_max_batches:
+                    break
+
+                # hook
+                self.evaluation_loop.on_evaluation_batch_start(batch, batch_idx, dataloader_idx)
+
+                # lightning module methods
+                with self.profiler.profile("evaluation_step_and_end"):
+                    output = self.evaluation_loop.evaluation_step(batch, batch_idx, dataloader_idx)
+                    output = self.evaluation_loop.evaluation_step_end(output)
+
+                # hook + store predictions
+                self.evaluation_loop.on_evaluation_batch_end(output, batch, batch_idx, dataloader_idx)
+
+                # log batch metrics
+                self.evaluation_loop.log_evaluation_step_metrics(output, batch_idx)
+
+                # track epoch level outputs
+                dl_outputs = self.track_output_for_epoch_end(dl_outputs, output)
+
+                # store batch level output per dataloader
+                self.evaluation_loop.outputs.append(dl_outputs)
+
+    # lightning module method
+    deprecated_eval_results = self.evaluation_loop.evaluation_epoch_end()
+
+    # hook
+    self.evaluation_loop.on_evaluation_epoch_end()
+
+    # update epoch-level lr_schedulers
+    if on_epoch:
+        self.optimizer_connector.update_learning_rates(interval='epoch')
+
+    # hook
+    self.evaluation_loop.on_evaluation_end()
+
+    # log epoch metrics
+    eval_loop_results = self.evaluation_loop.log_epoch_metrics_on_evaluation_end()
+
+    # save predictions to disk
+    self.evaluation_loop.predictions.to_disk()
+
+    # enable train mode again
+    self.evaluation_loop.on_evaluation_model_train()
+
+    torch.set_grad_enabled(True)
+
+    return eval_loop_results, deprecated_eval_results

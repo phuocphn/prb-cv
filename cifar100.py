@@ -59,6 +59,7 @@ class LiMCIFAR100(pl.LightningModule):
         elif train_scheme == "sw_precision":
             module = importlib.import_module("models.cifar100.sw_precision_models")
             self.model = getattr(module, arch)()
+            self.model.current_bit = 8
         elif train_scheme == "fp32":
             module = importlib.import_module("models.cifar100")
             self.model = getattr(module, arch)()
@@ -90,6 +91,8 @@ class LiMCIFAR100(pl.LightningModule):
         # Calling self.log will surface up scalars for you in TensorBoard
         self.log('val_loss', loss, prog_bar=True)
         self.log('val_acc', acc, prog_bar=True)
+        self.log('acc_' + str(self.model.current_bit), acc, prog_bar=True)
+
         return loss
 
     def test_step(self, batch, batch_idx):

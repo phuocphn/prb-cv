@@ -20,7 +20,9 @@ from tinyimagenet import LiMTinyImageNet
 from tinyimagenet224 import LiMTinyImageNet224
 from imagenette import LiMImagenette
 from imagenet import LiMImagenet
-from trainer.sw_training_loop import SwitchablePrecisionTrainLoop
+from trainer.sw_training_loop import SwitchablePrecisionTrainLoop, run_evaluation
+import types
+
 
 def main(hparams):
     if hparams.dataset == 'mnist':
@@ -100,6 +102,7 @@ def main(hparams):
             progress_bar_refresh_rate=20, 
             distributed_backend=hparams.distributed_backend, 
             weights_summary='full')
+    trainer.run_evaluation = types.MethodType(run_evaluation, trainer)
 
     if hparams.train_scheme == "sw_precision":
         trainer.train_loop = SwitchablePrecisionTrainLoop(trainer, 'max_size_cycle')

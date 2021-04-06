@@ -15,24 +15,29 @@ class PreActBasic(nn.Module):
     expansion = 1
     def __init__(self, in_channels, out_channels, stride):
         super().__init__()
-        self.residual = nn.Sequential(
-            nn.BatchNorm2d(in_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels * PreActBasic.expansion, kernel_size=3, padding=1)
-        )
+        # self.residual = nn.Sequential(
+        #     nn.BatchNorm2d(in_channels),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1),
+        #     nn.BatchNorm2d(out_channels),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(out_channels, out_channels * PreActBasic.expansion, kernel_size=3, padding=1)
+        # )
+        self.bn1 = nn.BatchNorm2d(in_channels)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(out_channels, out_channels * PreActBasic.expansion, kernel_size=3, padding=1)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_channels != out_channels * PreActBasic.expansion:
             self.shortcut = nn.Conv2d(in_channels, out_channels * PreActBasic.expansion, 1, stride=stride)
 
     def forward(self, x):
-
-        res = self.residual(x)
+        # res = self.residual(x)
+        res = self.conv1(self.relu(self.bn1(x)))
+        res = self.conv2(self.relu(self.bn2(res)))
         shortcut = self.shortcut(x)
-
         return res + shortcut
 
 
@@ -42,28 +47,37 @@ class PreActBottleNeck(nn.Module):
     def __init__(self, in_channels, out_channels, stride):
         super().__init__()
 
-        self.residual = nn.Sequential(
-            nn.BatchNorm2d(in_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels, out_channels, 1, stride=stride),
+        self.bn1 = nn.BatchNorm2d(in_channels)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv1 = nn.Conv2d(in_channels, out_channels, 1, stride=stride)
 
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, 3, padding=1),
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1)
 
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels * PreActBottleNeck.expansion, 1)
-        )
+        self.bn3 = nn.BatchNorm2d(out_channels)
+        self.conv3 = nn.Conv2d(out_channels, out_channels * PreActBottleNeck.expansion, 1)
+        # self.residual = nn.Sequential(
+        #     nn.BatchNorm2d(in_channels),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(in_channels, out_channels, 1, stride=stride),
 
+        #     nn.BatchNorm2d(out_channels),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(out_channels, out_channels, 3, padding=1),
+
+        #     nn.BatchNorm2d(out_channels),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(out_channels, out_channels * PreActBottleNeck.expansion, 1)
+        # )
         self.shortcut = nn.Sequential()
-
         if stride != 1 or in_channels != out_channels * PreActBottleNeck.expansion:
             self.shortcut = nn.Conv2d(in_channels, out_channels * PreActBottleNeck.expansion, 1, stride=stride)
 
     def forward(self, x):
-
-        res = self.residual(x)
+        # res = self.residual(x)
+        res = self.conv1(self.relu(self.bn1(x)))
+        res = self.conv2(self.relu(self.bn2(res)))
+        res = self.conv3(self.relu(self.bn3(res)))
         shortcut = self.shortcut(x)
 
         return res + shortcut
@@ -74,11 +88,9 @@ class PreActResNet(nn.Module):
         super().__init__()
         self.input_channels = 64
 
-        self.pre = nn.Sequential(
-            nn.Conv2d(3, 64, 3, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True)
-        )
+        self.conv1 = _InputConv2dLSQ(3, 64, 3, padding=1)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.relu = nn.ReLU(inplace=True)
 
         self.stage1 = self._make_layers(block, num_block[0], 64,  1)
         self.stage2 = self._make_layers(block, num_block[1], 128, 2)
@@ -101,7 +113,7 @@ class PreActResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.pre(x)
+        x = self.relu(self.bn1(self.conv1(x)))
 
         x = self.stage1(x)
         x = self.stage2(x)
