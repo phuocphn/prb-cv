@@ -102,9 +102,9 @@ def main(hparams):
             progress_bar_refresh_rate=20, 
             distributed_backend=hparams.distributed_backend, 
             weights_summary='full')
-    trainer.run_evaluation = types.MethodType(run_evaluation, trainer)
 
     if hparams.train_scheme == "sw_precision":
+        trainer.run_evaluation = types.MethodType(run_evaluation, trainer)
         trainer.train_loop = SwitchablePrecisionTrainLoop(trainer, 'max_size_cycle')
 
 
