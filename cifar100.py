@@ -27,6 +27,7 @@ class LiMCIFAR100(pl.LightningModule):
         arch = hparams.get("arch")
         train_scheme = hparams.get("train_scheme",)
 
+        self.train_scheme = train_scheme
         self.data_dir = os.path.expanduser(hparams.get("data_dir", "~/data"))
         self.learning_rate = hparams.get("lr")
         self.weight_decay = hparams.get("weight_decay")
@@ -91,7 +92,9 @@ class LiMCIFAR100(pl.LightningModule):
         # Calling self.log will surface up scalars for you in TensorBoard
         self.log('val_loss', loss, prog_bar=True)
         self.log('val_acc', acc, prog_bar=True)
-        self.log('acc_' + str(self.model.current_bit), acc, prog_bar=True)
+
+        if self.train_scheme == "sw_precision":
+            self.log('acc_' + str(self.model.current_bit), acc, prog_bar=True)
 
         return loss
 
