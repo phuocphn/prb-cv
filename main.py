@@ -1,6 +1,11 @@
 import argparse
 import os
 import importlib
+import types
+import re
+import time 
+
+
 import torch
 import torchvision
 from torch import nn
@@ -21,7 +26,6 @@ from tinyimagenet224 import LiMTinyImageNet224
 from imagenette import LiMImagenette
 from imagenet import LiMImagenet
 from trainer.sw_training_loop import SwitchablePrecisionTrainLoop, run_evaluation
-import types
 
 
 def main(hparams):
@@ -88,9 +92,27 @@ def main(hparams):
     # weight initlization
     if hparams.init_from:
         checkpoint = torch.load(hparams.init_from)
-        _state_dict = model.state_dict()
-        _state_dict.update(checkpoint['state_dict'])
+        if hparams.train_scheme in ("fp32", "lsq"):
+            _state_dict = model.state_dict()
+            _state_dict.update(checkpoint['state_dict'])
+
+        if hparams.train_scheme == "sw_precision":
+            loaded_params = {}
+            for k, v in checkpoint['state_dict'].items():
+                if ".bn1." in k or ".bn2." in k:
+                    for idx in [0, 1, 2, 3]:
+                        new_key = re.sub(r".bn(\d).",r".bn\1.bn.%s." % str(idx) ,  k)
+                        loaded_params[new_key] = v
+                else:
+                    loaded_params[k] = v
+            _state_dict.update(loaded_params)
         model.load_state_dict(_state_dict)
+
+    # print model
+    print ("Model")
+    print ("-" * 50)
+    print (model)
+    time.sleep(10)
 
     trainer = pl.Trainer(gpus=hparams.gpus, 
             logger=logger,

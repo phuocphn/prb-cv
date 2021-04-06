@@ -11,7 +11,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from functools import partial
-from quantizers.sw_lsq import SWConv2dLSQ, InputSWConv2dLSQ, SWLinearLSQ, SWBatchNorm2d
+from quantizers.sw_lsq import SWConv2dLSQ,  SWBatchNorm2d
+from quantizers.lsq import InputConv2dLSQ, LinearLSQ
+
 
 
 class PreActBasic(nn.Module):
@@ -21,10 +23,10 @@ class PreActBasic(nn.Module):
         super().__init__()
         conv_layer = SWConv2dLSQ
 
-        self.bn1 = nn.BatchNorm2d(in_channels)
+        self.bn1 = SWBatchNorm2d(in_channels)
         self.relu = nn.ReLU(inplace=True)
         self.conv1 = conv_layer(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
-        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.bn2 = SWBatchNorm2d(out_channels)
         self.conv2 = conv_layer(out_channels, out_channels * PreActBasic.expansion, kernel_size=3, padding=1)
 
 
@@ -46,14 +48,14 @@ class PreActBottleNeck(nn.Module):
     def __init__(self, in_channels, out_channels, stride, bit=4):
         super().__init__()
         conv_layer = SWConv2dLSQ
-        self.bn1 = nn.BatchNorm2d(in_channels)
+        self.bn1 = SWBatchNorm2d(in_channels)
         self.relu = nn.ReLU(inplace=True)
         self.conv1 = conv_layer(in_channels, out_channels, 1, stride=stride)
 
-        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.bn2 = SWBatchNorm2d(out_channels)
         self.conv2 = conv_layer(out_channels, out_channels, 3, padding=1)
 
-        self.bn3 = nn.BatchNorm2d(out_channels)
+        self.bn3 = SWBatchNorm2d(out_channels)
         self.conv3 = conv_layer(out_channels, out_channels * PreActBottleNeck.expansion, 1)
         self.shortcut = nn.Sequential()
 
@@ -73,11 +75,11 @@ class PreActResNet(nn.Module):
     def __init__(self, block, num_block, class_num=100, bit=4):
         super().__init__()
         self.input_channels = 64
-        _OutputLinearLSQ = SWLinearLSQ
-        _InputConv2dLSQ = InputSWConv2dLSQ
+        _OutputLinearLSQ = partial(LinearLSQ, bit=8)
+        _InputConv2dLSQ = partial(InputConv2dLSQ, bit=8)
 
         self.conv1 = _InputConv2dLSQ(3, 64, 3, padding=1)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.bn1 = SWBatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
 
         self.stage1 = self._make_layers(block, num_block[0], 64,  1, bit=bit)
@@ -90,7 +92,7 @@ class PreActResNet(nn.Module):
     def switch_precision(self, bit):
         self.current_bit = bit
         for n, m in self.named_modules():
-            if type(m) in (SWLinearLSQ, SWConv2dLSQ, InputSWConv2dLSQ, SWBatchNorm2d):
+            if type(m) in (SWConv2dLSQ, SWBatchNorm2d): # no change for the first and last layer
                 m.set_quantizer_runtime_bitwidth(bit)
 
 
