@@ -35,8 +35,12 @@ class LiMCIFAR100(pl.LightningModule):
         self.batch_size = hparams.get("batch_size")
         self.num_workers = hparams.get("num_workers", 4)
 
+        # optional
+        self.max_epochs = hparams.get("epochs", 200)
+
         # Hardcode some dataset specific attributes
         self.num_classes = 10
+        self.best_acc = 0.0
 
         self.transform_train = transforms.Compose([
             #transforms.ToPILImage(),
@@ -89,9 +93,13 @@ class LiMCIFAR100(pl.LightningModule):
         preds = torch.argmax(outputs, dim=1)
         acc = accuracy(preds, y)
 
+        if acc > self.best_acc:
+            self.best_acc = acc
+
         # Calling self.log will surface up scalars for you in TensorBoard
         self.log('val_loss', loss, prog_bar=True)
         self.log('val_acc', acc, prog_bar=True)
+        self.log('best_acc', self.best_acc, prog_bar=True)
 
         if self.train_scheme == "sw_precision":
             self.log('acc_' + str(self.model.current_bit), acc, prog_bar=True)
@@ -104,7 +112,7 @@ class LiMCIFAR100(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate, momentum=self.momentum, weight_decay=self.weight_decay)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.max_epochs)
         return [optimizer], [scheduler]
 
 
