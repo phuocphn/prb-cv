@@ -105,7 +105,7 @@ class InputSWConv2dLSQ(nn.Conv2d):
             return F.conv2d(self.quan_a(x), self.quan_w(self.weight), self.bias, self.stride,
                             self.padding, self.dilation, self.groups)
 
-bits_list = [8,6,5,4]
+bits_list = [5,4,3,2]
 switchbn = True
 class SWBatchNorm2d(nn.Module):
     def __init__(self, num_features,

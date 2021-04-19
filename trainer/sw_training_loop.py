@@ -179,7 +179,7 @@ class SwitchablePrecisionTrainLoop(TrainLoop):
         """
         with self.trainer.profiler.profile("training_step_and_backward"):
             # lightning module hook
-            for bw in [8,6,5,4]:
+            for idx, bw in enumerate([5,4,3,2]):
                 self.trainer.lightning_module.model.switch_precision(bit=bw)
                 result = self.training_step(split_batch, batch_idx, opt_idx, hiddens)
                 if self._curr_step_result == None:
@@ -191,7 +191,7 @@ class SwitchablePrecisionTrainLoop(TrainLoop):
                 if not self._skip_backward and self.automatic_optimization:
                     #is_first_batch_to_accumulate = batch_idx % self.trainer.accumulate_grad_batches == 0
                     #if is_first_batch_to_accumulate:
-                    if bw == 8:
+                    if idx == 0:
                         self.on_before_zero_grad(optimizer)
                         self.optimizer_zero_grad(batch_idx, optimizer, opt_idx)
 
@@ -253,7 +253,7 @@ def run_evaluation(self, max_batches=None, on_epoch=False):
 
     # hook
     self.evaluation_loop.on_evaluation_epoch_start()
-    for bw in [8,6,5,4]:
+    for idx, bw in enumerate([5,4,3,2]):
         self.lightning_module.model.switch_precision(bw)
         # run validation/testineii
         for dataloader_idx, dataloader in enumerate(dataloaders):
