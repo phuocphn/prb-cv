@@ -1,6 +1,11 @@
 import argparse
 import os
 import importlib
+import types
+import re
+import time 
+
+
 import torch
 import torchvision
 from torch import nn
@@ -20,28 +25,7 @@ from tinyimagenet import LiMTinyImageNet
 from tinyimagenet224 import LiMTinyImageNet224
 from imagenette import LiMImagenette
 from imagenet import LiMImagenet
-
-from pytorch_lightning.trainer.connectors.checkpoint_connector import CheckpointConnector
-from pytorch_lightning.core.lightning import LightningModule
-
-class LSQCheckpointConnector(CheckpointConnector):
-    def __init__(self, *args, **kwargs):
-        super(LSQCheckpointConnector, self).__init__(*args, **kwargs)
-    def restore_model_state(self, model: LightningModule, checkpoint) -> None:
-        """
-        Restore model states from a 'PyTorch-Lightning checkpoint' dictionary object
-        """
-
-        # restore datamodule states
-        if self.trainer.datamodule is not None:
-            self.trainer.datamodule.on_load_checkpoint(checkpoint)
-
-        # hook: give user access to checkpoint if needed.
-        model.on_load_checkpoint(checkpoint)
-
-        # restore model state_dict
-        model.load_state_dict(checkpoint['state_dict'])
-
+from trainer.sw_training_loop import SwitchablePrecisionTrainLoop, run_evaluation
 
 
 def main(hparams):
@@ -61,11 +45,7 @@ def main(hparams):
     elif hparams.dataset == 'cifar100':
         model = LiMCIFAR100(hparams=vars(hparams))
 
-        # model = LiMCIFAR100(arch=hparams.arch,
-        #     learning_rate=hparams.lr, 
-        #     weight_decay=hparams.weight_decay, 
-        #     momentum=hparams.momentum, 
-        #     batch_size=hparams.batch_size, )
+
     elif hparams.dataset == 'tinyimagenet':
         model = LiMTinyImageNet(arch=hparams.arch,
             learning_rate=hparams.lr, 
@@ -112,9 +92,28 @@ def main(hparams):
     # weight initlization
     if hparams.init_from:
         checkpoint = torch.load(hparams.init_from)
-        _state_dict = model.state_dict()
-        _state_dict.update(checkpoint['state_dict'])
+        if hparams.train_scheme in ("fp32", "lsq"):
+            _state_dict = model.state_dict()
+            _state_dict.update(checkpoint['state_dict'])
+
+        if hparams.train_scheme == "sw_precision":
+            loaded_params = {}
+            for k, v in checkpoint['state_dict'].items():
+                if ".bn1." in k or ".bn2." in k:
+                    for idx in [0, 1, 2, 3]:
+                        new_key = re.sub(r".bn(\d).",r".bn\1.bn.%s." % str(idx) ,  k)
+                        loaded_params[new_key] = v
+                else:
+                    loaded_params[k] = v
+            _state_dict = model.state_dict()
+            _state_dict.update(loaded_params)
         model.load_state_dict(_state_dict)
+
+    # print model
+    print ("Model")
+    print ("-" * 50)
+    print (model)
+    time.sleep(10)
 
     trainer = pl.Trainer(gpus=hparams.gpus, 
             logger=logger,
@@ -127,7 +126,10 @@ def main(hparams):
             distributed_backend=hparams.distributed_backend, 
             weights_summary='full')
 
-    trainer.checkpoint_connector = LSQCheckpointConnector(trainer)
+    if hparams.train_scheme == "sw_precision":
+        trainer.run_evaluation = types.MethodType(run_evaluation, trainer)
+        trainer.train_loop = SwitchablePrecisionTrainLoop(trainer, 'max_size_cycle')
+
 
     if hparams.evaluate:
         trainer.test()
@@ -145,7 +147,7 @@ if __name__ == '__main__':
                         choices=['cifar10', 'cifar100', 'mnist', 'tinyimagenet', 'tinyimagenet224', 'imagenette', 'imagenet'],
                         type=str, help='dataset name' )
     parser.add_argument('--train_scheme', default='fp32', 
-                        choices=['fp32', 'lsq', 'uniq', 'x', 'y', 'z'],
+                        choices=['fp32', 'lsq', 'uniq', 'sw_precision', 'y', 'z'],
                         type=str, help='training scheme' )
 
     parser.add_argument('--arch', default='ResNet18', type=str, help='network architecture.' )

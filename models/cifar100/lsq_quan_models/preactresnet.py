@@ -21,22 +21,28 @@ class PreActBasic(nn.Module):
         super().__init__()
         conv_layer = partial(Conv2dLSQ, bit=bit)
 
-        self.residual = nn.Sequential(
-            nn.BatchNorm2d(in_channels),
-            nn.ReLU(inplace=True),
-            conv_layer(in_channels, out_channels, kernel_size=3, stride=stride, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            conv_layer(out_channels, out_channels * PreActBasic.expansion, kernel_size=3, padding=1)
-        )
+        # self.residual = nn.Sequential(
+        #     nn.BatchNorm2d(in_channels),
+        #     nn.ReLU(inplace=True),
+        #     conv_layer(in_channels, out_channels, kernel_size=3, stride=stride, padding=1),
+        #     nn.BatchNorm2d(out_channels),
+        #     nn.ReLU(inplace=True),
+        #     conv_layer(out_channels, out_channels * PreActBasic.expansion, kernel_size=3, padding=1)
+        # )
+        self.bn1 = nn.BatchNorm2d(in_channels)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv1 = conv_layer(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.conv2 = conv_layer(out_channels, out_channels * PreActBasic.expansion, kernel_size=3, padding=1)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_channels != out_channels * PreActBasic.expansion:
             self.shortcut = conv_layer(in_channels, out_channels * PreActBasic.expansion, 1, stride=stride)
 
     def forward(self, x):
-
-        res = self.residual(x)
+        # res = self.residual(x)
+        res = self.conv1(self.relu(self.bn1(x)))
+        res = self.conv2(self.relu(self.bn2(res)))
         shortcut = self.shortcut(x)
 
         return res + shortcut
@@ -49,28 +55,38 @@ class PreActBottleNeck(nn.Module):
         super().__init__()
         conv_layer = partial(Conv2dLSQ, bit=bit)
 
-        self.residual = nn.Sequential(
-            nn.BatchNorm2d(in_channels),
-            nn.ReLU(inplace=True),
-            conv_layer(in_channels, out_channels, 1, stride=stride),
+        # self.residual = nn.Sequential(
+        #     nn.BatchNorm2d(in_channels),
+        #     nn.ReLU(inplace=True),
+        #     conv_layer(in_channels, out_channels, 1, stride=stride),
 
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            conv_layer(out_channels, out_channels, 3, padding=1),
+        #     nn.BatchNorm2d(out_channels),
+        #     nn.ReLU(inplace=True),
+        #     conv_layer(out_channels, out_channels, 3, padding=1),
 
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            conv_layer(out_channels, out_channels * PreActBottleNeck.expansion, 1)
-        )
+        #     nn.BatchNorm2d(out_channels),
+        #     nn.ReLU(inplace=True),
+        #     conv_layer(out_channels, out_channels * PreActBottleNeck.expansion, 1)
+        # )
+        self.bn1 = nn.BatchNorm2d(in_channels)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv1 = conv_layer(in_channels, out_channels, 1, stride=stride)
 
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.conv2 = conv_layer(out_channels, out_channels, 3, padding=1)
+
+        self.bn3 = nn.BatchNorm2d(out_channels)
+        self.conv3 = conv_layer(out_channels, out_channels * PreActBottleNeck.expansion, 1)
         self.shortcut = nn.Sequential()
 
         if stride != 1 or in_channels != out_channels * PreActBottleNeck.expansion:
             self.shortcut = conv_layer(in_channels, out_channels * PreActBottleNeck.expansion, 1, stride=stride)
 
     def forward(self, x):
-
-        res = self.residual(x)
+        res = self.conv1(self.relu(self.bn1(x)))
+        res = self.conv2(self.relu(self.bn2(res)))
+        res = self.conv3(self.relu(self.bn3(res)))
+        # res = self.residual(x)
         shortcut = self.shortcut(x)
 
         return res + shortcut
@@ -83,11 +99,9 @@ class PreActResNet(nn.Module):
         _OutputLinearLSQ = partial(LinearLSQ, bit=8)
         _InputConv2dLSQ = partial(InputConv2dLSQ, bit=8)
 
-        self.pre = nn.Sequential(
-            _InputConv2dLSQ(3, 64, 3, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True)
-        )
+        self.conv1 = _InputConv2dLSQ(3, 64, 3, padding=1)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.relu = nn.ReLU(inplace=True)
 
         self.stage1 = self._make_layers(block, num_block[0], 64,  1, bit=bit)
         self.stage2 = self._make_layers(block, num_block[1], 128, 2, bit=bit)
@@ -110,7 +124,7 @@ class PreActResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.pre(x)
+        x = self.relu(self.bn1(self.conv1(x)))
 
         x = self.stage1(x)
         x = self.stage2(x)
