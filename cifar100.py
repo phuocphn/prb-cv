@@ -40,7 +40,7 @@ class LiMCIFAR100(pl.LightningModule):
 
         # Hardcode some dataset specific attributes
         self.num_classes = 10
-        self.best_acc = 0.0
+        # self.best_acc = 0.0
 
         self.transform_train = transforms.Compose([
             #transforms.ToPILImage(),
@@ -59,6 +59,10 @@ class LiMCIFAR100(pl.LightningModule):
 
         if train_scheme == "lsq":
             module = importlib.import_module("models.cifar100.lsq_quan_models")
+            bit = hparams.get("bit")
+            self.model = getattr(module, arch)(bit=bit)
+        elif train_scheme == "adabit":
+            module = importlib.import_module("models.cifar100.adabit_models")
             bit = hparams.get("bit")
             self.model = getattr(module, arch)(bit=bit)
         elif train_scheme == "sw_precision":
@@ -93,13 +97,13 @@ class LiMCIFAR100(pl.LightningModule):
         preds = torch.argmax(outputs, dim=1)
         acc = accuracy(preds, y)
 
-        if acc > self.best_acc:
-            self.best_acc = acc
+        # if acc > self.best_acc:
+        #     self.best_acc = acc
 
         # Calling self.log will surface up scalars for you in TensorBoard
         self.log('val_loss', loss, prog_bar=True)
         self.log('val_acc', acc, prog_bar=True)
-        self.log('best_acc', self.best_acc, prog_bar=True)
+        # self.log('best_acc', self.best_acc, prog_bar=True)
 
         if self.train_scheme == "sw_precision":
             self.log('acc_' + str(self.model.current_bit), acc, prog_bar=True)
