@@ -5,7 +5,7 @@ from torch.autograd import Function
 from torch.nn.modules.utils import _pair
 
 import munch
-FLAG=munch.munchify({
+FLAGS=munch.munchify({
     'bits_list': [8,6,5,4], 
     'switchbn': True, 
     'weight_only': False, 
@@ -92,6 +92,10 @@ class SwitchBN2d(nn.Module):
         else:
             y = self.bn[0](input)
         return y
+
+    # new added function
+    def set_quantizer_runtime_bitwidth(self, bit):
+        self.bits = bit
 
 
 class QConv2d(nn.Conv2d):
@@ -216,6 +220,9 @@ class QConv2d(nn.Conv2d):
             bita = 32
         return bitw, bita
 
+    def set_quantizer_runtime_bitwidth(self, bit):
+        self.bits = bit
+
 
 class QLinear(nn.Linear):
     def __init__(self, in_features, out_features, bias=True, bitw_min=None, bita_min=None, pact_fp=False, weight_only=False):
@@ -307,3 +314,6 @@ class QLinear(nn.Linear):
         if self.weight_only:
             bita = 32
         return bitw, bita
+
+    def set_quantizer_runtime_bitwidth(self, bit):
+        self.bits = bit

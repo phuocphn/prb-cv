@@ -105,7 +105,7 @@ class LiMCIFAR100(pl.LightningModule):
         self.log('val_acc', acc, prog_bar=True)
         # self.log('best_acc', self.best_acc, prog_bar=True)
 
-        if self.train_scheme == "sw_precision":
+        if self.train_scheme in ("sw_precision", "adabit"):
             self.log('acc_' + str(self.model.current_bit), acc, prog_bar=True)
 
         return loss

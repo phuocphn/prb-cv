@@ -96,7 +96,7 @@ def main(hparams):
             _state_dict = model.state_dict()
             _state_dict.update(checkpoint['state_dict'])
 
-        if hparams.train_scheme == "sw_precision":
+        if hparams.train_scheme in ("sw_precision", "adabit"):
             loaded_params = {}
             for k, v in checkpoint['state_dict'].items():
                 if ".bn1." in k or ".bn2." in k:
@@ -126,7 +126,7 @@ def main(hparams):
             distributed_backend=hparams.distributed_backend, 
             weights_summary='full')
 
-    if hparams.train_scheme == "sw_precision":
+    if hparams.train_scheme in ("sw_precision", "adabit"):
         trainer.run_evaluation = types.MethodType(run_evaluation, trainer)
         trainer.train_loop = SwitchablePrecisionTrainLoop(trainer, 'max_size_cycle')
 
@@ -147,7 +147,7 @@ if __name__ == '__main__':
                         choices=['cifar10', 'cifar100', 'mnist', 'tinyimagenet', 'tinyimagenet224', 'imagenette', 'imagenet'],
                         type=str, help='dataset name' )
     parser.add_argument('--train_scheme', default='fp32', 
-                        choices=['fp32', 'lsq', 'uniq', 'sw_precision', 'y', 'z'],
+                        choices=['fp32', 'lsq', 'uniq', 'sw_precision', 'adabit', 'z'],
                         type=str, help='training scheme' )
 
     parser.add_argument('--arch', default='ResNet18', type=str, help='network architecture.' )

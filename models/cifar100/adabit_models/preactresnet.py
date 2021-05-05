@@ -92,7 +92,7 @@ class PreActResNet(nn.Module):
     def switch_precision(self, bit):
         self.current_bit = bit
         for n, m in self.named_modules():
-            if type(m) in (SWConv2dLSQ, SwitchBN2d): # no change for the first and last layer
+            if type(m) in (QConv2d, SwitchBN2d): # no change for the first and last layer
                 m.set_quantizer_runtime_bitwidth(bit)
 
 
