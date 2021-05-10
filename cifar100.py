@@ -65,6 +65,7 @@ class LiMCIFAR100(pl.LightningModule):
             module = importlib.import_module("models.cifar100.adabit_models")
             bit = hparams.get("bit")
             self.model = getattr(module, arch)(bit=bit)
+            self.current_bit = 8
         elif train_scheme == "sw_precision":
             module = importlib.import_module("models.cifar100.sw_precision_models")
             self.model = getattr(module, arch)()

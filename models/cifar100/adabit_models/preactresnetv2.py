@@ -132,6 +132,13 @@ class Model(nn.Module):
                 if not m.affine:
                     m.weight.data.fill_(1)
                     m.bias.data.zero_()
+                    
+    def switch_precision(self, bit):
+        self.current_bit = bit
+        for n, m in self.named_modules():
+            if type(m) in (QConv2d, SwitchBN2d): # no change for the first and last layer
+                m.set_quantizer_runtime_bitwidth(bit)
 
-def preactresnet18_v2():
+
+def preactresnet18_v2(bit=-1):
     return Model()
