@@ -12,6 +12,7 @@ import munch
 FLAGS=munch.munchify({
     'stats_sharing': False, 
     'depth': 32,
+    'bits_list': [8,6,5,4],
     'rescale': True})
 
 
