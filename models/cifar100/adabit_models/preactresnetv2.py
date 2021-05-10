@@ -13,7 +13,7 @@ FLAGS=munch.munchify({
     'stats_sharing': False, 
     'depth': 32,
     'bits_list': [8,6,5,4],
-    'reset_parameters': True,
+    'reset_parameters': False,
     'rescale': True})
 
 
