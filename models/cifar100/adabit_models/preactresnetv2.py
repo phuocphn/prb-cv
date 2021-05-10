@@ -71,6 +71,8 @@ class Model(nn.Module):
             # : [stage1, stage2, stage3, stage4]
             
             20: [3, 3, 3],
+            32: [5,5,5],
+
             56: [9, 9, 9],
             110: [18, 18, 18]
         }
