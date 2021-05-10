@@ -11,7 +11,7 @@ from quantizers.adabit import SwitchBN2d,  QConv2d, QLinear
 import munch
 FLAGS=munch.munchify({
     'stats_sharing': False, 
-    'depth': 20,
+    'depth': 32,
     'rescale': True})
 
 
