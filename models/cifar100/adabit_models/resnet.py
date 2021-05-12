@@ -142,8 +142,14 @@ class ResNet(nn.Module):
         output = self.fc(output)
 
         return output
+        
+    def switch_precision(self, bit):
+        self.current_bit = bit
+        for n, m in self.named_modules():
+            if type(m) in (QConv2d, SwitchBN2d): # no change for the first and last layer
+                m.set_quantizer_runtime_bitwidth(bit)
 
-def resnet18():
+def resnet18(bit=-1):
     """ return a ResNet 18 object
     """
     return ResNet(BasicBlock, [2, 2, 2, 2])
