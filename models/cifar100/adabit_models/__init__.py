@@ -1,2 +1,3 @@
 from .preactresnet import *  
-from .preactresnetv2 import *  
+from .resnetv2 import *  
+from .resnet import *  

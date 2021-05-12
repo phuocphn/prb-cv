@@ -144,5 +144,5 @@ class Model(nn.Module):
                 m.set_quantizer_runtime_bitwidth(bit)
 
 
-def preactresnet18_v2(bit=-1):
+def resnet18_v2(bit=-1):
     return Model()
