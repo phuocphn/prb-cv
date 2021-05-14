@@ -10,8 +10,10 @@
 
 import torch
 import torch.nn as nn
+from functools import partial
 from quantizers.lsq import Conv2dLSQ, InputConv2dLSQ, LinearLSQ
 from utils.config import FLAGS
+
 
 class BasicBlock(nn.Module):
     """Basic Block for resnet 18 and resnet 34
