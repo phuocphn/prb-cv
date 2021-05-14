@@ -145,27 +145,27 @@ class ResNet(nn.Module):
             if type(m) in (Conv2dLSQ, nn.BatchNorm2d): # no change for the first and last layer
                 m.set_quantizer_runtime_bitwidth(bit)
 
-def resnet18():
+def resnet18(bit=4):
     """ return a ResNet 18 object
     """
     return ResNet(BasicBlock, [2, 2, 2, 2], bit=bit)
 
-def resnet34():
+def resnet34(bit=4):
     """ return a ResNet 34 object
     """
     return ResNet(BasicBlock, [3, 4, 6, 3], bit=bit)
 
-def resnet50():
+def resnet50(bit=4):
     """ return a ResNet 50 object
     """
     return ResNet(BottleNeck, [3, 4, 6, 3], bit=bit)
 
-def resnet101():
+def resnet101(bit=4):
     """ return a ResNet 101 object
     """
     return ResNet(BottleNeck, [3, 4, 23, 3], bit=bit)
 
-def resnet152():
+def resnet152(bit=4):
     """ return a ResNet 152 object
     """
     return ResNet(BottleNeck, [3, 8, 36, 3], bit=bit)
