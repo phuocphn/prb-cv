@@ -161,7 +161,10 @@ def app():
                 job_yaml_file = sys.argv[idx+1]
             idx = idx + 1
         if job_yaml_file is None:
-            job_yaml_file = sys.stdin.readline()
+            return []
+            #job_yaml_file = sys.stdin.readline()
+
+        
         FLAGS = Config(job_yaml_file)
         return FLAGS
     else:
