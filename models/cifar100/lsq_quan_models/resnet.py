@@ -24,15 +24,16 @@ class BasicBlock(nn.Module):
     #to distinct
     expansion = 1
 
-    def __init__(self, in_channels, out_channels, stride=1):
+    def __init__(self, in_channels, out_channels, stride=1, bit=4):
         super().__init__()
 
+        conv_layer = partial(Conv2dLSQ, bit=bit)
         #residual function
         self.residual_function = nn.Sequential(
-            Conv2dLSQ(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False),
+            conv_layer(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            Conv2dLSQ(out_channels, out_channels * BasicBlock.expansion, kernel_size=3, padding=1, bias=False),
+            conv_layer(out_channels, out_channels * BasicBlock.expansion, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels * BasicBlock.expansion)
         )
 
@@ -43,7 +44,7 @@ class BasicBlock(nn.Module):
         #use 1*1 convolution to match the dimension
         if stride != 1 or in_channels != BasicBlock.expansion * out_channels:
             self.shortcut = nn.Sequential(
-                Conv2dLSQ(in_channels, out_channels * BasicBlock.expansion, kernel_size=1, stride=stride, bias=False),
+                conv_layer(in_channels, out_channels * BasicBlock.expansion, kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(out_channels * BasicBlock.expansion)
             )
 
@@ -55,16 +56,18 @@ class BottleNeck(nn.Module):
 
     """
     expansion = 4
-    def __init__(self, in_channels, out_channels, stride=1):
+    def __init__(self, in_channels, out_channels, stride=1, bit=4):
         super().__init__()
+        conv_layer = partial(Conv2dLSQ, bit=bit)
+
         self.residual_function = nn.Sequential(
-            Conv2dLSQ(in_channels, out_channels, kernel_size=1, bias=False),
+            conv_layer(in_channels, out_channels, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            Conv2dLSQ(out_channels, out_channels, stride=stride, kernel_size=3, padding=1, bias=False),
+            conv_layer(out_channels, out_channels, stride=stride, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            Conv2dLSQ(out_channels, out_channels * BottleNeck.expansion, kernel_size=1, bias=False),
+            conv_layer(out_channels, out_channels * BottleNeck.expansion, kernel_size=1, bias=False),
             nn.BatchNorm2d(out_channels * BottleNeck.expansion),
         )
 
@@ -72,7 +75,7 @@ class BottleNeck(nn.Module):
 
         if stride != 1 or in_channels != out_channels * BottleNeck.expansion:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels * BottleNeck.expansion, stride=stride, kernel_size=1, bias=False),
+                conv_layer(in_channels, out_channels * BottleNeck.expansion, stride=stride, kernel_size=1, bias=False),
                 nn.BatchNorm2d(out_channels * BottleNeck.expansion)
             )
 
@@ -92,10 +95,10 @@ class ResNet(nn.Module):
             nn.ReLU(inplace=True))
         #we use a different inputsize than the original paper
         #so conv2_x's stride is 1
-        self.conv2_x = self._make_layer(block, 64, num_block[0], 1)
-        self.conv3_x = self._make_layer(block, 128, num_block[1], 2)
-        self.conv4_x = self._make_layer(block, 256, num_block[2], 2)
-        self.conv5_x = self._make_layer(block, 512, num_block[3], 2)
+        self.conv2_x = self._make_layer(block, 64, num_block[0], 1, bit=bit)
+        self.conv3_x = self._make_layer(block, 128, num_block[1], 2, bit=bit)
+        self.conv4_x = self._make_layer(block, 256, num_block[2], 2, bit=bit)
+        self.conv5_x = self._make_layer(block, 512, num_block[3], 2, bit=bit)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = LinearLSQ(512 * block.expansion, num_classes, bit=8)
 
@@ -145,27 +148,27 @@ class ResNet(nn.Module):
 def resnet18():
     """ return a ResNet 18 object
     """
-    return ResNet(BasicBlock, [2, 2, 2, 2])
+    return ResNet(BasicBlock, [2, 2, 2, 2], bit=bit)
 
 def resnet34():
     """ return a ResNet 34 object
     """
-    return ResNet(BasicBlock, [3, 4, 6, 3])
+    return ResNet(BasicBlock, [3, 4, 6, 3], bit=bit)
 
 def resnet50():
     """ return a ResNet 50 object
     """
-    return ResNet(BottleNeck, [3, 4, 6, 3])
+    return ResNet(BottleNeck, [3, 4, 6, 3], bit=bit)
 
 def resnet101():
     """ return a ResNet 101 object
     """
-    return ResNet(BottleNeck, [3, 4, 23, 3])
+    return ResNet(BottleNeck, [3, 4, 23, 3], bit=bit)
 
 def resnet152():
     """ return a ResNet 152 object
     """
-    return ResNet(BottleNeck, [3, 8, 36, 3])
+    return ResNet(BottleNeck, [3, 8, 36, 3], bit=bit)
 
 
 
