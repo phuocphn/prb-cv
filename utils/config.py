@@ -155,22 +155,14 @@ def app():
     global FLAGS
     if FLAGS is None:
         job_yaml_file = None
-        batch_size = None
+        idx = 0
         for arg in sys.argv:
-            if arg.startswith('app:'):
-                job_yaml_file = arg[4:]
-            if arg.startswith('bs:'):
-                batch_size = int(arg[3:])
+            if arg.startswith('--config_path'):
+                job_yaml_file = sys.argv[idx+1]
+            idx = idx + 1
         if job_yaml_file is None:
             job_yaml_file = sys.stdin.readline()
         FLAGS = Config(job_yaml_file)
-        if batch_size is not None:
-            FLAGS.batch_size = batch_size
-        if FLAGS.batch_size > 256:
-            FLAGS.warmup_epochs = 5
-            FLAGS.lr = FLAGS.lr * FLAGS.batch_size / 256
-        else:
-            FLAGS.warmup_epochs = 0
         return FLAGS
     else:
         return FLAGS

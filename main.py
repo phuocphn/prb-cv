@@ -150,6 +150,7 @@ if __name__ == '__main__':
                         choices=['fp32', 'lsq', 'uniq', 'sw_precision', 'adabit', 'z'],
                         type=str, help='training scheme' )
 
+    parser.add_argument('--config_path', default='', type=str, help='config file (only for AdaBits)' )
     parser.add_argument('--arch', default='ResNet18', type=str, help='network architecture.' )
     parser.add_argument('--distributed_backend', default='dp', type=str, help='distributed backend.' )
 
