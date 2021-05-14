@@ -15,12 +15,6 @@ from pytorch_lightning.metrics.functional import accuracy
 class LiMCIFAR100(pl.LightningModule):
     
     def __init__(self, hparams):
-                    #data_dir='~/data',
-                    #arch='ResNet18', 
-                    #learning_rate=0.1, 
-                    #momentum=0.9,
-                    #weight_decay=5e-4, 
-                    #num_workers=2, batch_size=128, *args, **kwargs):
         super().__init__()
 
         # Set our init args as class attributes
@@ -40,7 +34,6 @@ class LiMCIFAR100(pl.LightningModule):
 
         # Hardcode some dataset specific attributes
         self.num_classes = 10
-        # self.best_acc = 0.0
 
         self.transform_train = transforms.Compose([
             #transforms.ToPILImage(),
@@ -64,7 +57,7 @@ class LiMCIFAR100(pl.LightningModule):
         elif train_scheme == "adabit":
             module = importlib.import_module("models.cifar100.adabit_models")
             bit = hparams.get("bit")
-            self.model = getattr(module, arch)(bit=bit)
+            self.model = getattr(module, arch)()
             self.current_bit = 8
         elif train_scheme == "sw_precision":
             module = importlib.import_module("models.cifar100.sw_precision_models")
@@ -98,13 +91,9 @@ class LiMCIFAR100(pl.LightningModule):
         preds = torch.argmax(outputs, dim=1)
         acc = accuracy(preds, y)
 
-        # if acc > self.best_acc:
-        #     self.best_acc = acc
-
         # Calling self.log will surface up scalars for you in TensorBoard
         self.log('val_loss', loss, prog_bar=True)
         self.log('val_acc', acc, prog_bar=True)
-        # self.log('best_acc', self.best_acc, prog_bar=True)
 
         if self.train_scheme in ("sw_precision", "adabit"):
             self.log('acc_' + str(self.model.current_bit), acc, prog_bar=True)

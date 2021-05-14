@@ -1,3 +1,6 @@
+# This implementation is based on: 
+# https://github.com/deJQK/AdaBits/blob/master/models/q_resnet_cifar.py
+
 import math
 import numpy as np
 import torch
@@ -5,18 +8,7 @@ import torch.nn as nn
 from torch.nn.modules.utils import _pair
 
 from quantizers.adabit import SwitchBN2d,  QConv2d, QLinear
-
-
-# from utils.config import FLAGS
-import munch
-FLAGS=munch.munchify({
-    'stats_sharing': False, 
-    'depth': 32,
-    'bits_list': [8,6,5,4],
-    'reset_parameters': False,
-    'rescale': True})
-
-
+from utils.config import FLAGS
 
 class Block(nn.Module):
     def __init__(self, inp, outp, stride):
@@ -144,5 +136,5 @@ class Model(nn.Module):
                 m.set_quantizer_runtime_bitwidth(bit)
 
 
-def resnet18_v2(bit=-1):
+def resnet18_v2():
     return Model()

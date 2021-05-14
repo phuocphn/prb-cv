@@ -12,27 +12,24 @@ import torch.nn.functional as F
 
 from functools import partial
 from quantizers.adabit import SwitchBN2d,  QConv2d, QLinear
-# from quantizers.lsq import InputConv2dLSQ, LinearLSQ
-
 
 
 class PreActBasic(nn.Module):
 
     expansion = 1
-    def __init__(self, in_channels, out_channels, stride, bit=4):
+    def __init__(self, in_channels, out_channels, stride):
         super().__init__()
-        conv_layer = QConv2d
 
         self.bn1 = SwitchBN2d(in_channels)
         self.relu = nn.ReLU(inplace=True)
-        self.conv1 = conv_layer(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
+        self.conv1 = QConv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
         self.bn2 = SwitchBN2d(out_channels)
-        self.conv2 = conv_layer(out_channels, out_channels * PreActBasic.expansion, kernel_size=3, padding=1)
+        self.conv2 = QConv2d(out_channels, out_channels * PreActBasic.expansion, kernel_size=3, padding=1)
 
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_channels != out_channels * PreActBasic.expansion:
-            self.shortcut = conv_layer(in_channels, out_channels * PreActBasic.expansion, 1, stride=stride)
+            self.shortcut = QConv2d(in_channels, out_channels * PreActBasic.expansion, 1, stride=stride)
 
     def forward(self, x):
         res = self.conv1(self.relu(self.bn1(x)))
@@ -45,22 +42,21 @@ class PreActBasic(nn.Module):
 class PreActBottleNeck(nn.Module):
 
     expansion = 4
-    def __init__(self, in_channels, out_channels, stride, bit=4):
+    def __init__(self, in_channels, out_channels, stride):
         super().__init__()
-        conv_layer = QConv2d
         self.bn1 = SwitchBN2d(in_channels)
         self.relu = nn.ReLU(inplace=True)
-        self.conv1 = conv_layer(in_channels, out_channels, 1, stride=stride)
+        self.conv1 = QConv2d(in_channels, out_channels, 1, stride=stride)
 
         self.bn2 = SwitchBN2d(out_channels)
-        self.conv2 = conv_layer(out_channels, out_channels, 3, padding=1)
+        self.conv2 = QConv2d(out_channels, out_channels, 3, padding=1)
 
         self.bn3 = SwitchBN2d(out_channels)
-        self.conv3 = conv_layer(out_channels, out_channels * PreActBottleNeck.expansion, 1)
+        self.conv3 = QConv2d(out_channels, out_channels * PreActBottleNeck.expansion, 1)
         self.shortcut = nn.Sequential()
 
         if stride != 1 or in_channels != out_channels * PreActBottleNeck.expansion:
-            self.shortcut = conv_layer(in_channels, out_channels * PreActBottleNeck.expansion, 1, stride=stride)
+            self.shortcut = QConv2d(in_channels, out_channels * PreActBottleNeck.expansion, 1, stride=stride)
 
     def forward(self, x):
         res = self.conv1(self.relu(self.bn1(x)))
@@ -72,22 +68,22 @@ class PreActBottleNeck(nn.Module):
 
 class PreActResNet(nn.Module):
 
-    def __init__(self, block, num_block, class_num=100, bit=4):
+    def __init__(self, block, num_block, class_num=100):
         super().__init__()
         self.input_channels = 64
-        _OutputLinearLSQ = partial(QLinear, bitw_min=32, bita_min=32)
-        _InputConv2dLSQ = partial(QConv2d, bitw_min=32, bita_min=32)
+        FP_QLinear = partial(QLinear, bitw_min=32, bita_min=32)
+        FP_QConv2d = partial(QConv2d, bitw_min=32, bita_min=32)
 
-        self.conv1 = _InputConv2dLSQ(3, 64, 3, padding=1)
+        self.conv1 = FP_QConv2d(3, 64, 3, padding=1)
         self.bn1 = SwitchBN2d(64)
         self.relu = nn.ReLU(inplace=True)
 
-        self.stage1 = self._make_layers(block, num_block[0], 64,  1, bit=bit)
-        self.stage2 = self._make_layers(block, num_block[1], 128, 2, bit=bit)
-        self.stage3 = self._make_layers(block, num_block[2], 256, 2, bit=bit)
-        self.stage4 = self._make_layers(block, num_block[3], 512, 2, bit=bit)
+        self.stage1 = self._make_layers(block, num_block[0], 64,  1)
+        self.stage2 = self._make_layers(block, num_block[1], 128, 2)
+        self.stage3 = self._make_layers(block, num_block[2], 256, 2)
+        self.stage4 = self._make_layers(block, num_block[3], 512, 2)
 
-        self.linear = _OutputLinearLSQ(self.input_channels, class_num)
+        self.linear = FP_QLinear(self.input_channels, class_num)
 
     def switch_precision(self, bit):
         self.current_bit = bit
@@ -122,18 +118,18 @@ class PreActResNet(nn.Module):
 
         return x
 
-def preactresnet18(bit=4):
-    return PreActResNet(PreActBasic, [2, 2, 2, 2], bit=bit)
+def preactresnet18():
+    return PreActResNet(PreActBasic, [2, 2, 2, 2])
 
-def preactresnet34(bit=4):
-    return PreActResNet(PreActBasic, [3, 4, 6, 3], bit=bit)
+def preactresnet34():
+    return PreActResNet(PreActBasic, [3, 4, 6, 3])
 
-def preactresnet50(bit=4):
-    return PreActResNet(PreActBottleNeck, [3, 4, 6, 3], bit=bit)
+def preactresnet50():
+    return PreActResNet(PreActBottleNeck, [3, 4, 6, 3])
 
-def preactresnet101(bit=4):
-    return PreActResNet(PreActBottleNeck, [3, 4, 23, 3], bit=bit)
+def preactresnet101():
+    return PreActResNet(PreActBottleNeck, [3, 4, 23, 3])
 
-def preactresnet152(bit=4):
-    return PreActResNet(PreActBottleNeck, [3, 8, 36, 3], bit=bit)
+def preactresnet152():
+    return PreActResNet(PreActBottleNeck, [3, 8, 36, 3])
 

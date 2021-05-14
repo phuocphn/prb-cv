@@ -1,0 +1,21 @@
+# =========================== Basic Settings ===========================
+
+stats_sharing: False
+
+clamp: True
+rescale: True #False
+rescale_conv: True #False
+switchbn: True #False
+bn_calib: False
+rescale_type: constant #[stddev, constant]
+
+switch_alpha: True
+weight_quant_scheme: modified
+act_quant_scheme: original
+
+adaptive_training: True
+depth: 32
+bits_list: [8,6,5,4]
+weight_only: False
+reset_parameters': False
+

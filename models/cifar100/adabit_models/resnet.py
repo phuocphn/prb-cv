@@ -11,14 +11,7 @@
 import torch
 import torch.nn as nn
 from quantizers.adabit import SwitchBN2d,  QConv2d, QLinear
-
-import munch
-FLAGS=munch.munchify({
-    'stats_sharing': False, 
-    'depth': 32,
-    'bits_list': [8,6,5,4],
-    'reset_parameters': False,
-    'rescale': True})
+from utils.config import FLAGS
 
 class BasicBlock(nn.Module):
     """Basic Block for resnet 18 and resnet 34
@@ -149,7 +142,7 @@ class ResNet(nn.Module):
             if type(m) in (QConv2d, SwitchBN2d): # no change for the first and last layer
                 m.set_quantizer_runtime_bitwidth(bit)
 
-def resnet18(bit=-1):
+def resnet18():
     """ return a ResNet 18 object
     """
     return ResNet(BasicBlock, [2, 2, 2, 2])

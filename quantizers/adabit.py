@@ -3,20 +3,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Function
 from torch.nn.modules.utils import _pair
-
-import munch
-FLAGS=munch.munchify({
-    'bits_list': [8,6,5,4], 
-    'switchbn': True, 
-    'weight_only': False, 
-    'switch_alpha': True, 
-    'clamp': False,
-    'weight_quant_scheme': 'modified', 
-    'act_quant_scheme': 
-    'original', 
-    'rescale_conv': False, 
-    'rescale': True})
-
+from utils.config import FLAGS
 
 class q_k(Function):
     """
@@ -46,18 +33,18 @@ class q_k(Function):
         return grad_output, None, None
 
 
-# def round_width(width, wm=None,
-#                 width_divisor=getattr(FLAGS, 'width_divisor', 1),
-#                 min_width=getattr(FLAGS, 'min_width', 1)):
-#     if not wm:
-#         return width
-#     width *= wm
-#     if min_width is None:
-#         min_width = width_divisor
-#     new_width = max(min_width, int(width + width_divisor / 2) // width_divisor * width_divisor)
-#     if new_width < 0.9 * width:
-#         new_width += width_divisor
-#     return int(new_width)
+def round_width(width, wm=None,
+                width_divisor=getattr(FLAGS, 'width_divisor', 1),
+                min_width=getattr(FLAGS, 'min_width', 1)):
+    if not wm:
+        return width
+    width *= wm
+    if min_width is None:
+        min_width = width_divisor
+    new_width = max(min_width, int(width + width_divisor / 2) // width_divisor * width_divisor)
+    if new_width < 0.9 * width:
+        new_width += width_divisor
+    return int(new_width)
 
 
 class SwitchBN2d(nn.Module):

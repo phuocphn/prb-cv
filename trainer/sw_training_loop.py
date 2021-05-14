@@ -37,6 +37,9 @@ from pytorch_lightning.utilities.warnings import WarningCache
 from pytorch_lightning.trainer.training_loop import TrainLoop
 from pytorch_lightning.trainer.states import RunningStage, TrainerState
 
+from utils.config import FLAGS
+
+
 class SwitchablePrecisionTrainLoop(TrainLoop):
 
     def __init__(self, *args, **kwargs):
@@ -179,7 +182,7 @@ class SwitchablePrecisionTrainLoop(TrainLoop):
         """
         with self.trainer.profiler.profile("training_step_and_backward"):
             # lightning module hook
-            for idx, bw in enumerate([8,6,5,4]):
+            for idx, bw in enumerate(FLAGS.bits_list):
                 self.trainer.lightning_module.model.switch_precision(bit=bw)
                 result = self.training_step(split_batch, batch_idx, opt_idx, hiddens)
                 if self._curr_step_result == None:
@@ -253,7 +256,7 @@ def run_evaluation(self, max_batches=None, on_epoch=False):
 
     # hook
     self.evaluation_loop.on_evaluation_epoch_start()
-    for idx, bw in enumerate([8,6,5,4]):
+    for idx, bw in enumerate(FLAGS.bits_list):
         self.lightning_module.model.switch_precision(bw)
         # run validation/testineii
         for dataloader_idx, dataloader in enumerate(dataloaders):
